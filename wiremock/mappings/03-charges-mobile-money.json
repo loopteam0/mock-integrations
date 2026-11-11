@@ -1,0 +1,96 @@
+{
+  "mappings": [
+    {
+      "id": "00000000-0000-0000-0003-000000000001",
+      "name": "Charge via Mobile Money - Dynamic State Recording",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPath": "/merchant/api/v1/charges/mobile-money",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$.reference"
+          },
+          {
+            "matchesJsonPath": "$.amount"
+          },
+          {
+            "matchesJsonPath": "$.currency"
+          },
+          {
+            "matchesJsonPath": "$.mobile_money.number"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Mobile money charge initiated successfully\",\n  \"data\": {\n    \"currency\": \"{{jsonPath request.body '$.currency'}}\",\n    \"amount\": \"{{jsonPath request.body '$.amount'}}\",\n    \"amount_expected\": \"{{jsonPath request.body '$.amount'}}\",\n    \"fee\": 45.0,\n    \"vat\": 3.38,\n    \"auth_model\": \"STK_PROMPT\",\n    \"transaction_reference\": \"KPY-MM-{{randomValue length=8 type='ALPHANUMERIC' uppercase=true}}\",\n    \"payment_reference\": \"{{jsonPath request.body '$.reference'}}\",\n    \"reference\": \"{{jsonPath request.body '$.reference'}}\",\n    \"status\": \"processing\",\n    \"narration\": \"{{val (jsonPath request.body '$.narration') default='Mobile Money Charge'}}\",\n    \"mobile_money\": {\n      \"number\": \"{{jsonPath request.body '$.mobile_money.number'}}\"\n    },\n    \"customer\": {\n      \"name\": \"{{val (jsonPath request.body '$.customer.name') default='Mobile Customer'}}\",\n      \"email\": \"{{val (jsonPath request.body '$.customer.email') default='momo@kora.test'}}\"\n    }\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "{{jsonPath request.body '$.reference'}}",
+            "state": {
+              "reference": "{{jsonPath request.body '$.reference'}}",
+              "amount": "{{jsonPath request.body '$.amount'}}",
+              "currency": "{{jsonPath request.body '$.currency'}}",
+              "customerName": "{{val (jsonPath request.body '$.customer.name') default='Mobile Customer'}}",
+              "customerEmail": "{{val (jsonPath request.body '$.customer.email') default='momo@kora.test'}}",
+              "narration": "{{val (jsonPath request.body '$.narration') default='Mobile Money Charge'}}",
+              "paymentMethod": "mobile_money",
+              "status": "success",
+              "createdAt": "{{now format='yyyy-MM-dd\\'T\\'HH:mm:ss\\'Z\\''}}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0003-000000000002",
+      "name": "Authorize Mobile Money Charge (OTP / STK)",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPath": "/merchant/api/v1/charges/mobile-money/authorize"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Mobile money charge authorized successfully\",\n  \"data\": {\n    \"status\": \"success\",\n    \"reference\": \"{{val (jsonPath request.body '$.transaction_reference') default='KORA-MOMO-001'}}\",\n    \"transaction_reference\": \"{{val (jsonPath request.body '$.transaction_reference') default='KORA-MOMO-001'}}\",\n    \"payment_reference\": \"{{val (jsonPath request.body '$.transaction_reference') default='KORA-MOMO-001'}}\"\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "{{val (jsonPath request.body '$.transaction_reference') default='KORA-MOMO-001'}}",
+            "state": {
+              "status": "success"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0003-000000000003",
+      "name": "Resend Mobile Money OTP / STK Prompt",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPath": "/merchant/api/v1/charges/mobile-money/resend-otp"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"OTP resent successfully\",\n  \"data\": {\n    \"reference\": \"{{val (jsonPath request.body '$.transaction_reference') default='KORA-MOMO-001'}}\",\n    \"transaction_reference\": \"{{val (jsonPath request.body '$.transaction_reference') default='KORA-MOMO-001'}}\",\n    \"status\": \"processing\"\n  }\n}"
+      }
+    }
+  ]
+}

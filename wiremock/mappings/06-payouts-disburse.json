@@ -1,0 +1,87 @@
+{
+  "mappings": [
+    {
+      "id": "00000000-0000-0000-0006-000000000001",
+      "name": "Single Payout Disburse - Dynamic State Recording",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPath": "/merchant/api/v1/transactions/disburse",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$.reference"
+          },
+          {
+            "matchesJsonPath": "$.destination.amount"
+          },
+          {
+            "matchesJsonPath": "$.destination.currency"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Disbursement initiated successfully\",\n  \"data\": {\n    \"amount\": \"{{jsonPath request.body '$.destination.amount'}}\",\n    \"fee\": \"50.00\",\n    \"currency\": \"{{jsonPath request.body '$.destination.currency'}}\",\n    \"status\": \"processing\",\n    \"reference\": \"{{jsonPath request.body '$.reference'}}\",\n    \"narration\": \"{{val (jsonPath request.body '$.destination.narration') default='Payout Disbursement'}}\",\n    \"customer\": {\n      \"name\": \"{{val (jsonPath request.body '$.destination.customer.name') default='Beneficiary'}}\",\n      \"email\": \"{{val (jsonPath request.body '$.destination.customer.email') default='beneficiary@kora.test'}}\"\n    }\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "{{jsonPath request.body '$.reference'}}",
+            "state": {
+              "reference": "{{jsonPath request.body '$.reference'}}",
+              "amount": "{{jsonPath request.body '$.destination.amount'}}",
+              "currency": "{{jsonPath request.body '$.destination.currency'}}",
+              "bankCode": "{{val (jsonPath request.body '$.destination.bank_account.bank') default='033'}}",
+              "accountNumber": "{{val (jsonPath request.body '$.destination.bank_account.account') default='0000000000'}}",
+              "customerName": "{{val (jsonPath request.body '$.destination.customer.name') default='Beneficiary'}}",
+              "customerEmail": "{{val (jsonPath request.body '$.destination.customer.email') default='beneficiary@kora.test'}}",
+              "narration": "{{val (jsonPath request.body '$.destination.narration') default='Payout Disbursement'}}",
+              "status": "success",
+              "createdAt": "{{now format='yyyy-MM-dd\\'T\\'HH:mm:ss\\'Z\\''}}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0006-000000000002",
+      "name": "Bulk Payout Disburse - Dynamic State Recording",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPath": "/merchant/api/v1/transactions/disburse/bulk",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$.batch_reference"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Bulk disbursement queued successfully\",\n  \"data\": {\n    \"batch_reference\": \"{{jsonPath request.body '$.batch_reference'}}\",\n    \"currency\": \"{{val (jsonPath request.body '$.currency') default='NGN'}}\",\n    \"description\": \"{{val (jsonPath request.body '$.description') default='Bulk Payout'}}\",\n    \"status\": \"processing\",\n    \"total_chargeable_amount\": 150000.0\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "{{jsonPath request.body '$.batch_reference'}}",
+            "state": {
+              "batch_reference": "{{jsonPath request.body '$.batch_reference'}}",
+              "currency": "{{val (jsonPath request.body '$.currency') default='NGN'}}",
+              "description": "{{val (jsonPath request.body '$.description') default='Bulk Payout'}}",
+              "status": "processing",
+              "createdAt": "{{now format='yyyy-MM-dd\\'T\\'HH:mm:ss\\'Z\\''}}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

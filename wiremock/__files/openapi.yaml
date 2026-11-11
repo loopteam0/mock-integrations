@@ -1,0 +1,2268 @@
+openapi: "3.0.3"
+info:
+  title: "Kora (Korapay) Complete Stateful Mock API — Payments & Identity (KYC/KYB)"
+  version: "1.0.0"
+  description: "Interactive OpenAPI 3.0.3 specification for the containerized **Kora (formerly Korapay) Stateful WireMock Server**.\n\n### Key Capabilities\n- **Dynamic Stateful Persistence (`wiremock-state-extension`)**: Every `POST` creation endpoint records state indexed by `reference` (or `account_reference` / `batch_reference` / `VR-*`), which can be immediately queried back via the corresponding `GET` endpoint.\n- **Finite-State-Machine Scenarios**: Supports `Card-Charge-Lifecycle` (`CARD-SCENARIO-001`), `Payout-Lifecycle` (`PAYOUT-SCENARIO-001`), `Refund-Balance-Lifecycle` (`REFUND-SCENARIO-001`), `Idempotency-Flow` (`IDEMPOTENT-REF-001`), and `Identity-Verification-Lifecycle` (`ID-SCENARIO-001`).\n- **Introspected WireMock Stubs**: Generated from `87` active WireMock stub mappings.\n\n### Pre-Configured Authentication\nUse Bearer token `sk_test_kora_stateful_mock_2025` (pre-authorized automatically in `/docs`)."
+  contact:
+    name: Kora Developer Documentation
+    url: "https://developers.korapay.com/docs/getting-started"
+servers:
+  - url: "http://localhost:8080"
+    description: Local Kora Stateful WireMock Server (Docker / Port 8080)
+security:
+  - BearerAuth: []
+tags:
+  - name: "Collections / Pay-ins"
+    description: "Initialize checkout charges, bank transfers, mobile money, Pay With Bank, EFT, and query charge status."
+  - name: "Card & OTP Scenarios"
+    description: "Stateful finite-state-machine card payment lifecycles with OTP challenge (`00000` invalid vs `12345` valid) and idempotency testing."
+  - name: Virtual Bank Accounts
+    description: "Create dedicated virtual bank accounts (VBA), fetch VBA details by reference, list inward transactions, and simulate sandbox credits."
+  - name: "Disbursements & Bulk Payouts"
+    description: "Single and bulk bank/mobile-money payouts, stateful polling (`PAYOUT-SCENARIO-001`), and bulk batch verification."
+  - name: Refunds
+    description: Initiate transaction refunds (coupled with merchant balance deduction) and query refund status by reference.
+  - name: "Balances & Settlements"
+    description: "Retrieve multi-currency merchant wallet balances (`NGN`, `KES`, `GHS`, `USD`), wallet ledger history, and settlements."
+  - name: "Verification & FX Utilities"
+    description: "List Nigerian banks and African Mobile Money Operators, resolve account names, and execute FX conversions."
+  - name: "Identity KYC - Nigeria"
+    description: "Verify Nigerian BVN, NIN, vNIN, Phone Number, Bank Account, Driver's License, Voter's Card (PVC), and International Passport."
+  - name: "Identity KYB - Business"
+    description: "Verify Nigerian Corporate Affairs Commission (CAC) registrations (`RC`, `BN`, `IT`) and Tax Identification Numbers (TIN)."
+  - name: "Identity KYC - Pan-Africa"
+    description: "Verify national identities across Kenya (National ID, KRA PIN, Passport), Ghana (Ghana Card, SSNIT, Voter's Card), and South Africa (Smart ID)."
+  - name: Identity Verification Management
+    description: "Retrieve stored KYC/KYB verification records by reference (`VR-*`), list verification history, verify document authenticity, and complete consent scenarios."
+paths:
+  "/merchant/api/v1/charges/initialize":
+    post:
+      tags:
+        - "Collections / Pay-ins"
+      summary: Initialize Checkout Charge (Stateful)
+      description: "Records dynamic charge state in `wiremock-state-extension` indexed by `reference` (Priority 5). Use `reference: \"IDEMPOTENT-REF-001\"` to test the `Idempotency-Flow` scenario (Priority 3)."
+      operationId: initializeCharge
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              amount: "25000.50"
+              currency: NGN
+              reference: "DOCS-TRY-001"
+              narration: "Order #1001 Payment"
+              notification_url: "https://webhook.site/kora-test"
+              redirect_url: "https://merchant.kora.test/callback"
+              customer:
+                name: Alice Wonderland
+                email: "alice@kora.test"
+      responses:
+        200:
+          description: Initialize Checkout Charge (Stateful) succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Initialize Checkout Charge (Stateful) succeeded
+                data:
+                  reference: "DOCS-TRY-001"
+                  checkout_url: "https://test-checkout.korapay.com/pay/DOCS-TRY-001"
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/charges/bank-transfer":
+    post:
+      tags:
+        - "Collections / Pay-ins"
+      summary: Charge via Bank Transfer (Stateful)
+      description: "Creates a dynamic dynamic bank-transfer charge with a Wema Bank virtual account and stores state under `reference`."
+      operationId: chargeBankTransfer
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              account_name: Bob Builder Virtual
+              amount: 15000
+              currency: NGN
+              reference: "KORA-BT-001"
+              customer:
+                name: Bob Builder
+                email: "bob@kora.test"
+      responses:
+        200:
+          description: Charge via Bank Transfer (Stateful) succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Charge via Bank Transfer (Stateful) succeeded
+                data:
+                  currency: NGN
+                  amount: "15000"
+                  reference: "KORA-BT-001"
+                  status: processing
+                  bank_account:
+                    account_name: Bob Builder Virtual
+                    account_number: "7812345678"
+                    bank_code: "035"
+                    bank_name: Wema Bank
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/charges/mobile-money":
+    post:
+      tags:
+        - "Collections / Pay-ins"
+      summary: Charge via Mobile Money (Stateful)
+      description: "Initiates a Mobile Money charge (`KES`/`GHS`) and records dynamic state under `reference`."
+      operationId: chargeMobileMoney
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              reference: "KORA-MOMO-001"
+              amount: 3000
+              currency: KES
+              mobile_money:
+                number: "254700000000"
+              customer:
+                name: Kenya User
+                email: "kenya@kora.test"
+      responses:
+        200:
+          description: Charge via Mobile Money (Stateful) succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Charge via Mobile Money (Stateful) succeeded
+                data:
+                  currency: KES
+                  amount: "3000"
+                  auth_model: STK_PROMPT
+                  reference: "KORA-MOMO-001"
+                  status: processing
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/charges/mobile-money/authorize":
+    post:
+      tags:
+        - "Collections / Pay-ins"
+      summary: Authorize Mobile Money Charge
+      description: "Authorizes a pending Mobile Money OTP/STK charge and updates state to `success`."
+      operationId: authorizeMobileMoney
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              transaction_reference: "KORA-MOMO-001"
+              authorization:
+                otp: "123456"
+      responses:
+        200:
+          description: Authorize Mobile Money Charge succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Authorize Mobile Money Charge succeeded
+                data:
+                  status: success
+                  reference: "KORA-MOMO-001"
+                  transaction_reference: "KORA-MOMO-001"
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/charges/mobile-money/resend-otp":
+    post:
+      tags:
+        - "Collections / Pay-ins"
+      summary: Resend Mobile Money OTP / STK Prompt
+      description: "Resends the OTP or STK prompt for an in-flight Mobile Money transaction."
+      operationId: resendMobileMoneyOtp
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              transaction_reference: "KORA-MOMO-001"
+      responses:
+        200:
+          description: Resend Mobile Money OTP / STK Prompt succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Resend Mobile Money OTP / STK Prompt succeeded
+                data:
+                  reference: "KORA-MOMO-001"
+                  status: processing
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/charges/card":
+    post:
+      tags:
+        - "Card & OTP Scenarios"
+      summary: "Initiate Card Charge (Scenario: Card-Charge-Lifecycle)"
+      description: "Transitions `Card-Charge-Lifecycle` from `Started` to `Pending_OTP` and returns `transaction_reference: \"CARD-SCENARIO-001\"` requiring OTP authorization."
+      operationId: chargeCard
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              charge_data: encrypted_card_payload_simulation
+      responses:
+        200:
+          description: "Initiate Card Charge (Scenario: Card-Charge-Lifecycle) succeeded"
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: "Initiate Card Charge (Scenario: Card-Charge-Lifecycle) succeeded"
+                data:
+                  transaction_reference: "CARD-SCENARIO-001"
+                  reference: "CARD-SCENARIO-001"
+                  currency: NGN
+                  amount: 12500.0
+                  status: processing
+                  auth_model: OTP
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/charges/card/authorize":
+    post:
+      tags:
+        - "Card & OTP Scenarios"
+      summary: "Authorize Card Charge with OTP (12345 = Valid, 00000 = Invalid)"
+      description: "Validates the OTP for `CARD-SCENARIO-001`. Sending `otp: \"00000\"` returns `400 Bad Request` and stays in `Pending_OTP`. Sending `otp: \"12345\"` transitions `Card-Charge-Lifecycle` to `Succeeded` (`200 OK`)."
+      operationId: authorizeCardCharge
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              transaction_reference: "CARD-SCENARIO-001"
+              authorization:
+                otp: "12345"
+      responses:
+        200:
+          description: "Authorize Card Charge with OTP (12345 = Valid, 00000 = Invalid) succeeded"
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: "Authorize Card Charge with OTP (12345 = Valid, 00000 = Invalid) succeeded"
+                data:
+                  transaction_reference: "CARD-SCENARIO-001"
+                  reference: "CARD-SCENARIO-001"
+                  status: success
+                  auth_model: NO_AUTH
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/charges/card/resend-otp":
+    post:
+      tags:
+        - "Card & OTP Scenarios"
+      summary: Resend Card Charge OTP
+      description: "Resends the one-time password for a pending card charge."
+      operationId: resendCardOtp
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              transaction_reference: "CARD-SCENARIO-001"
+      responses:
+        200:
+          description: Resend Card Charge OTP succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Resend Card Charge OTP succeeded
+                data:
+                  transaction_reference: "CARD-SCENARIO-001"
+                  status: processing
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/charges/pay-with-bank":
+    post:
+      tags:
+        - "Collections / Pay-ins"
+      summary: Initiate Pay With Bank Charge (Stateful)
+      description: "Initiates a Pay With Bank charge and persists state under `reference`."
+      operationId: chargePayWithBank
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              reference: "PWB-DYN-001"
+              amount: 18000
+              currency: NGN
+              bank_code: "058"
+              customer:
+                name: PWB User
+                email: "pwb@kora.test"
+      responses:
+        200:
+          description: Initiate Pay With Bank Charge (Stateful) succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Initiate Pay With Bank Charge (Stateful) succeeded
+                data:
+                  reference: "PWB-DYN-001"
+                  amount: "18000"
+                  currency: NGN
+                  status: processing
+                  authorization:
+                    redirect_url: "https://pay.korapay.com/eft/PWB-DYN-001"
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/charges/pay-with-bank/authorize":
+    post:
+      tags:
+        - "Collections / Pay-ins"
+      summary: Authorize Pay With Bank Charge
+      description: Authorizes a pending Pay With Bank charge.
+      operationId: authorizePayWithBank
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              transaction_reference: "PWB-DYN-001"
+      responses:
+        200:
+          description: Authorize Pay With Bank Charge succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Authorize Pay With Bank Charge succeeded
+                data:
+                  status: success
+                  reference: "PWB-DYN-001"
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/charges/pay-with-bank/banks":
+    get:
+      tags:
+        - "Collections / Pay-ins"
+      summary: List Pay With Bank Supported Banks
+      description: Returns all banks supported for Pay With Bank / Instant EFT collections.
+      operationId: listPayWithBankBanks
+      responses:
+        200:
+          description: List Pay With Bank Supported Banks succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: List Pay With Bank Supported Banks succeeded
+                data:
+                  - name: ABSA Bank
+                    slug: "absa-bank"
+                    code: "632005"
+                    country: ZA
+                    currency: ZAR
+                  - name: First National Bank (FNB)
+                    slug: "first-national-bank"
+                    code: "250655"
+                    country: ZA
+                    currency: ZAR
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/charges/eft":
+    post:
+      tags:
+        - "Collections / Pay-ins"
+      summary: Initiate Instant EFT Charge (Stateful)
+      description: "Initiates a South African Instant EFT charge (`ZAR`) and records state under `reference`."
+      operationId: chargeEft
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              reference: "EFT-DYN-001"
+              amount: 1200
+              currency: ZAR
+              customer:
+                name: SA Customer
+                email: "zar@kora.test"
+      responses:
+        200:
+          description: Initiate Instant EFT Charge (Stateful) succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Initiate Instant EFT Charge (Stateful) succeeded
+                data:
+                  reference: "EFT-DYN-001"
+                  amount: "1200"
+                  currency: ZAR
+                  status: processing
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/charges/{reference}":
+    get:
+      tags:
+        - "Collections / Pay-ins"
+      summary: Get Charge by Reference (Stateful Lookup)
+      description: "Looks up the charge in `wiremock-state-extension` using `state-matcher` (`hasContext: \"{{request.path.reference}}\"`). Returns `200 OK` with the recorded charge details if found, or `404 Not Found` if unknown."
+      operationId: getChargeByReference
+      responses:
+        200:
+          description: Get Charge by Reference (Stateful Lookup) succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Get Charge by Reference (Stateful Lookup) succeeded
+                data:
+                  reference: "DOCS-TRY-001"
+                  currency: NGN
+                  amount: "25000.50"
+                  status: success
+                  payment_method: checkout
+                  customer:
+                    name: Alice Wonderland
+                    email: "alice@kora.test"
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+        404:
+          $ref: "#/components/responses/NotFoundError"
+      parameters:
+        - name: reference
+          in: path
+          required: true
+          description: Unique charge reference
+          schema:
+            type: string
+          example: "DOCS-TRY-001"
+  "/merchant/api/v1/charges":
+    get:
+      tags:
+        - "Collections / Pay-ins"
+      summary: List Charges
+      description: "Returns a paginated list of pay-in charges."
+      operationId: listCharges
+      responses:
+        200:
+          description: List Charges succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: List Charges succeeded
+                data:
+                  - reference: "KORA-DYN-001"
+                    amount: "25000.50"
+                    currency: NGN
+                    status: success
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/pay-ins":
+    get:
+      tags:
+        - "Collections / Pay-ins"
+      summary: "List Pay-ins (Alias)"
+      description: "Returns a paginated list of pay-in transactions."
+      operationId: listPayIns
+      responses:
+        200:
+          description: "List Pay-ins (Alias) succeeded"
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: "List Pay-ins (Alias) succeeded"
+                data:
+                  - reference: "KORA-DYN-001"
+                    amount: "25000.50"
+                    currency: NGN
+                    status: success
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/virtual-bank-account":
+    post:
+      tags:
+        - Virtual Bank Accounts
+      summary: Create Virtual Bank Account (Stateful)
+      description: "Creates a dedicated Virtual Bank Account and records state under `account_reference`."
+      operationId: createVirtualBankAccount
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              account_name: Acme Merchant VBA
+              account_reference: "VBA-REF-001"
+              permanent: true
+              bank_code: "070"
+              customer:
+                name: Acme Corp
+                email: "acme@kora.test"
+      responses:
+        200:
+          description: Create Virtual Bank Account (Stateful) succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Create Virtual Bank Account (Stateful) succeeded
+                data:
+                  account_name: Acme Merchant VBA
+                  account_number: "0657789765"
+                  bank_code: "070"
+                  bank_name: Fidelity Bank
+                  account_reference: "VBA-REF-001"
+                  account_status: active
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/virtual-bank-account/transactions":
+    get:
+      tags:
+        - Virtual Bank Accounts
+      summary: List Virtual Bank Account Transactions
+      description: Retrieves inward credit transactions for a Virtual Bank Account.
+      operationId: listVirtualBankAccountTransactions
+      responses:
+        200:
+          description: List Virtual Bank Account Transactions succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: List Virtual Bank Account Transactions succeeded
+                data:
+                  total_amount_received: 15000.0
+                  account_number: "0657789765"
+                  currency: NGN
+                  transactions:
+                    - reference: "KPY-VBA-TX-001"
+                      status: success
+                      amount: "15000.00"
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+      parameters:
+        - name: account_number
+          in: query
+          required: false
+          description: "10-digit NUBAN account number"
+          schema:
+            type: string
+          example: "0657789765"
+  "/merchant/api/v1/virtual-bank-account/{account_reference}":
+    get:
+      tags:
+        - Virtual Bank Accounts
+      summary: Get Virtual Bank Account by Reference (Stateful Lookup)
+      description: "Returns the stored Virtual Bank Account for `account_reference` via `state-matcher` or `404 Not Found`."
+      operationId: getVirtualBankAccountByReference
+      responses:
+        200:
+          description: Get Virtual Bank Account by Reference (Stateful Lookup) succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Get Virtual Bank Account by Reference (Stateful Lookup) succeeded
+                data:
+                  account_name: Acme Merchant VBA
+                  account_number: "0657789765"
+                  bank_code: "070"
+                  bank_name: Fidelity Bank
+                  account_reference: "VBA-REF-001"
+                  account_status: active
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+        404:
+          $ref: "#/components/responses/NotFoundError"
+      parameters:
+        - name: account_reference
+          in: path
+          required: true
+          description: Resource account_reference
+          schema:
+            type: string
+          example: "VBA-REF-001"
+  "/merchant/api/v1/virtual-bank-account/sandbox/credit":
+    post:
+      tags:
+        - Virtual Bank Accounts
+      summary: Credit Sandbox Virtual Bank Account
+      description: Simulates an incoming bank transfer credit to a sandbox Virtual Bank Account.
+      operationId: creditSandboxVirtualBankAccount
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              account_number: "0657789765"
+              amount: 25000
+              currency: NGN
+      responses:
+        200:
+          description: Credit Sandbox Virtual Bank Account succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Credit Sandbox Virtual Bank Account succeeded
+                data:
+                  account_number: "0657789765"
+                  amount: "25000"
+                  currency: NGN
+                  status: success
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/transactions/disburse":
+    post:
+      tags:
+        - "Disbursements & Bulk Payouts"
+      summary: "Disburse Single Payout (Stateful & Scenario)"
+      description: "Initiates a single payout and records state under `reference`. Use `reference: \"PAYOUT-SCENARIO-001\"` to trigger the `Payout-Lifecycle` polling scenario (`Started` -> `Processing` -> `Completed`)."
+      operationId: disburseSinglePayout
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              reference: "PAYOUT-DYN-001"
+              destination:
+                type: bank_account
+                amount: 50000
+                currency: NGN
+                narration: Contractor Payout
+                bank_account:
+                  bank: "033"
+                  account: "2158634852"
+                customer:
+                  name: Ebuka Ciroma
+                  email: "ebuka@kora.test"
+      responses:
+        200:
+          description: "Disburse Single Payout (Stateful & Scenario) succeeded"
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: "Disburse Single Payout (Stateful & Scenario) succeeded"
+                data:
+                  amount: "50000"
+                  fee: "50.00"
+                  currency: NGN
+                  status: processing
+                  reference: "PAYOUT-DYN-001"
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/transactions/disburse/bulk":
+    post:
+      tags:
+        - "Disbursements & Bulk Payouts"
+      summary: Disburse Bulk Payouts (Stateful)
+      description: "Queues a batch of payouts and records batch state under `batch_reference`."
+      operationId: disburseBulkPayout
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              batch_reference: "BATCH-001"
+              description: Monthly Payroll
+              merchant_bears_cost: true
+              currency: NGN
+              payouts:
+                - reference: "BULK-ITEM-1"
+                  amount: 50000
+                  type: bank_account
+                  narration: Salary 1
+                  bank_account:
+                    bank_code: "033"
+                    account_number: "2158634852"
+                  customer:
+                    name: Staff One
+                    email: "staff1@kora.test"
+      responses:
+        200:
+          description: Disburse Bulk Payouts (Stateful) succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Disburse Bulk Payouts (Stateful) succeeded
+                data:
+                  batch_reference: "BATCH-001"
+                  currency: NGN
+                  description: Monthly Payroll
+                  status: processing
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/transactions/bulk/{batch_reference}":
+    get:
+      tags:
+        - "Disbursements & Bulk Payouts"
+      summary: Get Bulk Payout Batch Summary (Stateful Lookup)
+      description: "Retrieves bulk batch summary from `wiremock-state-extension` for `batch_reference` or returns `404 Not Found`."
+      operationId: getBulkPayoutBatch
+      responses:
+        200:
+          description: Get Bulk Payout Batch Summary (Stateful Lookup) succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Get Bulk Payout Batch Summary (Stateful Lookup) succeeded
+                data:
+                  batch_reference: "BATCH-001"
+                  status: processing
+                  currency: NGN
+                  successful_transactions: 1
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+        404:
+          $ref: "#/components/responses/NotFoundError"
+      parameters:
+        - name: batch_reference
+          in: path
+          required: true
+          description: Resource batch_reference
+          schema:
+            type: string
+          example: "BATCH-001"
+  "/merchant/api/v1/transactions/bulk/{batch_reference}/payout":
+    get:
+      tags:
+        - "Disbursements & Bulk Payouts"
+      summary: List Payout Items in Bulk Batch
+      description: "Lists individual payout transactions belonging to `batch_reference`."
+      operationId: listBulkPayoutItems
+      responses:
+        200:
+          description: List Payout Items in Bulk Batch succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: List Payout Items in Bulk Batch succeeded
+                data:
+                  - reference: "BULK-ITEM-1"
+                    batch_reference: "BATCH-001"
+                    amount: "50000.00"
+                    status: success
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+      parameters:
+        - name: batch_reference
+          in: path
+          required: true
+          description: Resource batch_reference
+          schema:
+            type: string
+          example: "BATCH-001"
+  "/merchant/api/v1/transactions/{reference}":
+    get:
+      tags:
+        - "Disbursements & Bulk Payouts"
+      summary: "Get Payout Transaction by Reference (Stateful & Scenario Polling)"
+      description: "Returns stored payout details for `reference` (`200 OK` or `404 Not Found`). For `PAYOUT-SCENARIO-001`, the first poll returns `status: \"processing\"` and transitions to `Completed`; subsequent polls return `status: \"success\"`."
+      operationId: getTransactionByReference
+      responses:
+        200:
+          description: "Get Payout Transaction by Reference (Stateful & Scenario Polling) succeeded"
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: "Get Payout Transaction by Reference (Stateful & Scenario Polling) succeeded"
+                data:
+                  reference: "PAYOUT-DYN-001"
+                  amount: "50000"
+                  fee: "50.00"
+                  currency: NGN
+                  status: success
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+        404:
+          $ref: "#/components/responses/NotFoundError"
+      parameters:
+        - name: reference
+          in: path
+          required: true
+          description: Resource reference
+          schema:
+            type: string
+          example: "PAYOUT-DYN-001"
+  "/merchant/api/v1/transactions":
+    get:
+      tags:
+        - "Disbursements & Bulk Payouts"
+      summary: List Payout Transactions
+      description: Returns a paginated list of payout transactions.
+      operationId: listTransactions
+      responses:
+        200:
+          description: List Payout Transactions succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: List Payout Transactions succeeded
+                data:
+                  - reference: "PAYOUT-DYN-001"
+                    amount: "50000"
+                    currency: NGN
+                    status: success
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/payouts":
+    get:
+      tags:
+        - "Disbursements & Bulk Payouts"
+      summary: List Payouts (Alias)
+      description: Returns a paginated list of payouts.
+      operationId: listPayouts
+      responses:
+        200:
+          description: List Payouts (Alias) succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: List Payouts (Alias) succeeded
+                data:
+                  - reference: "PAYOUT-DYN-001"
+                    amount: "50000"
+                    currency: NGN
+                    status: success
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/refunds/initiate":
+    post:
+      tags:
+        - Refunds
+      summary: "Initiate Refund (Stateful & Deducts Merchant Balance)"
+      description: "Records refund state under `reference` and transitions `Refund-Balance-Lifecycle` from `Started` (`500000` NGN) to `Refunded` (`450000` NGN)."
+      operationId: initiateRefund
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              reference: "REFUND-SCENARIO-001"
+              payment_reference: "KPY-ORIG-001"
+              amount: 50000
+              currency: NGN
+              reason: Order cancelled
+      responses:
+        200:
+          description: "Initiate Refund (Stateful & Deducts Merchant Balance) succeeded"
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: "Initiate Refund (Stateful & Deducts Merchant Balance) succeeded"
+                data:
+                  refund_reference: "REFUND-SCENARIO-001"
+                  payment_reference: "KPY-ORIG-001"
+                  amount: "50000"
+                  currency: NGN
+                  status: completed
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/refunds/{reference}":
+    get:
+      tags:
+        - Refunds
+      summary: Get Refund by Reference (Stateful Lookup)
+      description: "Retrieves stored refund state for `reference` via `state-matcher` or returns `404 Not Found`."
+      operationId: getRefundByReference
+      responses:
+        200:
+          description: Get Refund by Reference (Stateful Lookup) succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Get Refund by Reference (Stateful Lookup) succeeded
+                data:
+                  refund_reference: "REFUND-SCENARIO-001"
+                  payment_reference: "KPY-ORIG-001"
+                  amount: "50000"
+                  currency: NGN
+                  status: completed
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+        404:
+          $ref: "#/components/responses/NotFoundError"
+      parameters:
+        - name: reference
+          in: path
+          required: true
+          description: Resource reference
+          schema:
+            type: string
+          example: "REFUND-SCENARIO-001"
+  "/merchant/api/v1/refunds":
+    get:
+      tags:
+        - Refunds
+      summary: List Refunds
+      description: Returns a paginated list of refunds.
+      operationId: listRefunds
+      responses:
+        200:
+          description: List Refunds succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: List Refunds succeeded
+                data:
+                  - refund_reference: "REFUND-SCENARIO-001"
+                    amount: "50000"
+                    currency: NGN
+                    status: completed
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/balances":
+    get:
+      tags:
+        - "Balances & Settlements"
+      summary: "Get Merchant Balances (Scenario-Aware)"
+      description: "Returns available and pending balances across `NGN`, `KES`, `GHS`, and `USD`. Returns `500000` NGN in `Started` state and `450000` NGN after `POST /refunds/initiate` transitions `Refund-Balance-Lifecycle` to `Refunded`."
+      operationId: getBalances
+      responses:
+        200:
+          description: "Get Merchant Balances (Scenario-Aware) succeeded"
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: "Get Merchant Balances (Scenario-Aware) succeeded"
+                data:
+                  NGN:
+                    pending_balance: 25000
+                    available_balance: 500000
+                  KES:
+                    pending_balance: 1200
+                    available_balance: 150000
+                  GHS:
+                    pending_balance: 0
+                    available_balance: 35000
+                  USD:
+                    pending_balance: 500
+                    available_balance: 12000
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/balances/history":
+    get:
+      tags:
+        - "Balances & Settlements"
+      summary: Get Merchant Wallet Balance History
+      description: Returns paginated ledger credit/debit entries.
+      operationId: getBalanceHistory
+      responses:
+        200:
+          description: Get Merchant Wallet Balance History succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Get Merchant Wallet Balance History succeeded
+                data:
+                  - reference: "KPY-LEDGER-001"
+                    currency: NGN
+                    amount: 25000.5
+                    direction: credit
+                    balance_before: 474999.5
+                    balance_after: 500000.0
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/settlements":
+    get:
+      tags:
+        - "Balances & Settlements"
+      summary: List Merchant Settlements
+      description: Returns a paginated list of merchant settlements.
+      operationId: listSettlements
+      responses:
+        200:
+          description: List Merchant Settlements succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: List Merchant Settlements succeeded
+                data:
+                  - reference: "STL-2025-001"
+                    currency: NGN
+                    total_amount: 485000.0
+                    status: settled
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/settlements/{reference}":
+    get:
+      tags:
+        - "Balances & Settlements"
+      summary: Get Settlement by Reference
+      description: "Fetches details of a single settlement by `reference`."
+      operationId: getSettlementByReference
+      responses:
+        200:
+          description: Get Settlement by Reference succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Get Settlement by Reference succeeded
+                data:
+                  reference: "STL-2025-001"
+                  currency: NGN
+                  total_amount: 485000
+                  status: settled
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+      parameters:
+        - name: reference
+          in: path
+          required: true
+          description: Resource reference
+          schema:
+            type: string
+          example: "STL-2025-001"
+  "/merchant/api/v1/misc/banks":
+    get:
+      tags:
+        - "Verification & FX Utilities"
+      summary: List Supported Banks
+      description: "Returns supported Nigerian commercial banks (`044`, `058`, `033`, `035`, `057`)."
+      operationId: listBanks
+      responses:
+        200:
+          description: List Supported Banks succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: List Supported Banks succeeded
+                data:
+                  - name: United Bank for Africa
+                    slug: "united-bank-for-africa"
+                    code: "033"
+                    country: NG
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/misc/banks/resolve":
+    post:
+      tags:
+        - "Verification & FX Utilities"
+      summary: Resolve Bank Account Number
+      description: "Resolves a bank code and NUBAN account number to the account holder's name (`EBUKA CIROMA OLADEMJI`)."
+      operationId: resolveBankAccount
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              bank: "033"
+              account: "2158634852"
+      responses:
+        200:
+          description: Resolve Bank Account Number succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Resolve Bank Account Number succeeded
+                data:
+                  bank_name: United Bank for Africa
+                  bank_code: "033"
+                  account_number: "2158634852"
+                  account_name: EBUKA CIROMA OLADEMJI
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/misc/mobile-money/operators":
+    get:
+      tags:
+        - "Verification & FX Utilities"
+      summary: List Mobile Money Operators
+      description: "Returns supported African Mobile Money Operators (`mtn-gh`, `safaricom-ke`, etc.)."
+      operationId: listMobileMoneyOperators
+      responses:
+        200:
+          description: List Mobile Money Operators succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: List Mobile Money Operators succeeded
+                data:
+                  - name: MTN Mobile Money Ghana
+                    slug: "mtn-gh"
+                    code: "mtn-gh"
+                    country: GH
+                    currency: GHS
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/misc/mobile-money/resolve":
+    post:
+      tags:
+        - "Verification & FX Utilities"
+      summary: Resolve Mobile Money Subscriber
+      description: "Resolves a mobile money wallet phone number and operator code to `KWAME MENSAH`."
+      operationId: resolveMobileMoneyAccount
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              phoneNumber: "0241234567"
+              mobileMoneyCode: "mtn-gh"
+      responses:
+        200:
+          description: Resolve Mobile Money Subscriber succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Resolve Mobile Money Subscriber succeeded
+                data:
+                  account_name: KWAME MENSAH
+                  phoneNumber: "0241234567"
+                  mobileMoneyCode: "mtn-gh"
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/conversions/rates":
+    get:
+      tags:
+        - "Verification & FX Utilities"
+      summary: Get FX Conversion Rate
+      description: "Retrieves the current exchange rate between `from` and `to` currencies."
+      operationId: getConversionRate
+      responses:
+        200:
+          description: Get FX Conversion Rate succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Get FX Conversion Rate succeeded
+                data:
+                  from_currency: USD
+                  to_currency: NGN
+                  rate: "1550.00"
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+      parameters:
+        - name: from
+          in: query
+          required: false
+          description: Source currency code
+          schema:
+            type: string
+          example: USD
+        - name: to
+          in: query
+          required: false
+          description: Target currency code
+          schema:
+            type: string
+          example: NGN
+  "/merchant/api/v1/conversions":
+    post:
+      tags:
+        - "Verification & FX Utilities"
+      summary: Execute Currency Conversion
+      description: Converts funds between two merchant currency balances.
+      operationId: executeConversion
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              reference: "CONV-TEST-001"
+              from_currency: USD
+              to_currency: NGN
+              amount: 100
+      responses:
+        200:
+          description: Execute Currency Conversion succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Execute Currency Conversion succeeded
+                data:
+                  reference: "CONV-TEST-001"
+                  from_currency: USD
+                  to_currency: NGN
+                  amount: "100"
+                  converted_amount: "155000.00"
+                  rate: "1550.00"
+                  status: success
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/identities/ng/bvn":
+    post:
+      tags:
+        - "Identity KYC - Nigeria"
+      summary: Verify Nigeria Bank Verification Number (BVN)
+      description: "Verifies an 11-digit Nigerian BVN and stores the verification record under `VR-BVN-{{id}}`. Requires `verification_consent: true` (passing `false` triggers the Priority 4 Consent Validation Guard `400 Bad Request`). Passing `id: \"ID-SCENARIO-001\"` initiates the `Identity-Verification-Lifecycle` scenario."
+      operationId: verifyNigeriaBvn
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              id: "11111111111"
+              verification_consent: true
+              first_name: Trevor
+              last_name: Mandela
+      responses:
+        200:
+          description: Verify Nigeria Bank Verification Number (BVN) succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Verify Nigeria Bank Verification Number (BVN) succeeded
+                data:
+                  reference: "VR-BVN-11111111111"
+                  id: "11111111111"
+                  id_type: ng_bvn
+                  first_name: Trevor
+                  last_name: Mandela
+                  date_of_birth: "1989-07-08"
+                  status: verified
+                  facial_match:
+                    confidence_score: 96.5
+                    match: true
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/identities/ng/nin":
+    post:
+      tags:
+        - "Identity KYC - Nigeria"
+      summary: Verify Nigeria National Identification Number (NIN)
+      description: "Verifies an 11-digit Nigerian NIN and records state under `VR-NIN-{{id}}`."
+      operationId: verifyNigeriaNin
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              id: "22222222222"
+              verification_consent: true
+      responses:
+        200:
+          description: Verify Nigeria National Identification Number (NIN) succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Verify Nigeria National Identification Number (NIN) succeeded
+                data:
+                  reference: "VR-NIN-22222222222"
+                  id: "22222222222"
+                  id_type: ng_nin
+                  first_name: Trevor
+                  last_name: Mandela
+                  status: verified
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/identities/ng/vnin":
+    post:
+      tags:
+        - "Identity KYC - Nigeria"
+      summary: Verify Nigeria Virtual NIN (vNIN)
+      description: "Verifies a 16-character NIMC Virtual NIN and records state under `VR-VNIN-{{id}}`."
+      operationId: verifyNigeriaVnin
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              id: AA123456789012BB
+              verification_consent: true
+      responses:
+        200:
+          description: Verify Nigeria Virtual NIN (vNIN) succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Verify Nigeria Virtual NIN (vNIN) succeeded
+                data:
+                  reference: "VR-VNIN-AA123456789012BB"
+                  id: AA123456789012BB
+                  id_type: ng_vnin
+                  status: verified
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/identities/ng/phone":
+    post:
+      tags:
+        - "Identity KYC - Nigeria"
+      summary: Verify Nigeria Phone Number
+      description: "Verifies a Nigerian subscriber phone number and records state under `VR-PHN-{{id}}`."
+      operationId: verifyNigeriaPhone
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              id: "08031234567"
+              verification_consent: true
+      responses:
+        200:
+          description: Verify Nigeria Phone Number succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Verify Nigeria Phone Number succeeded
+                data:
+                  reference: "VR-PHN-08031234567"
+                  id: "08031234567"
+                  id_type: ng_phone
+                  first_name: Trevor
+                  last_name: Mandela
+                  status: verified
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/identities/ng/bank-account":
+    post:
+      tags:
+        - "Identity KYC - Nigeria"
+      summary: Verify Nigeria Bank Account Identity (KYC)
+      description: "Verifies a Nigerian NUBAN bank account + BVN identity linkage and records state under `VR-BA-{{account_number}}`."
+      operationId: verifyNigeriaBankAccountKyc
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              account_number: "2158634852"
+              bank_code: "033"
+              verification_consent: true
+      responses:
+        200:
+          description: Verify Nigeria Bank Account Identity (KYC) succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Verify Nigeria Bank Account Identity (KYC) succeeded
+                data:
+                  reference: "VR-BA-2158634852"
+                  account_number: "2158634852"
+                  bank_code: "033"
+                  account_name: EBUKA CIROMA OLADEMJI
+                  bvn: "22222222222"
+                  status: verified
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/identities/ng/drivers-license":
+    post:
+      tags:
+        - "Identity KYC - Nigeria"
+      summary: "Verify Nigeria FRSC Driver's License"
+      description: "Verifies a Nigerian Driver's License and records state under `VR-DL-{{id}}`."
+      operationId: verifyNigeriaDriversLicense
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              id: FKJ12345AA01
+              verification_consent: true
+      responses:
+        200:
+          description: "Verify Nigeria FRSC Driver's License succeeded"
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: "Verify Nigeria FRSC Driver's License succeeded"
+                data:
+                  reference: "VR-DL-FKJ12345AA01"
+                  id: FKJ12345AA01
+                  id_type: ng_drivers_license
+                  status: verified
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/identities/ng/voters-card":
+    post:
+      tags:
+        - "Identity KYC - Nigeria"
+      summary: "Verify Nigeria INEC Voter's Card (PVC)"
+      description: "Verifies a Nigerian Permanent Voter's Card and records state under `VR-VC-{{id}}`."
+      operationId: verifyNigeriaVotersCard
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              id: 90F5B1234567890
+              verification_consent: true
+      responses:
+        200:
+          description: "Verify Nigeria INEC Voter's Card (PVC) succeeded"
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: "Verify Nigeria INEC Voter's Card (PVC) succeeded"
+                data:
+                  reference: "VR-VC-90F5B1234567890"
+                  id: 90F5B1234567890
+                  id_type: ng_voters_card
+                  status: verified
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/identities/ng/passport":
+    post:
+      tags:
+        - "Identity KYC - Nigeria"
+      summary: Verify Nigeria International Passport
+      description: "Verifies a Nigerian International Passport and records state under `VR-PP-{{id}}`."
+      operationId: verifyNigeriaPassport
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              id: A12345678
+              verification_consent: true
+              last_name: Mandela
+      responses:
+        200:
+          description: Verify Nigeria International Passport succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Verify Nigeria International Passport succeeded
+                data:
+                  reference: "VR-PP-A12345678"
+                  id: A12345678
+                  id_type: ng_passport
+                  status: verified
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/identities/ng/cac":
+    post:
+      tags:
+        - "Identity KYB - Business"
+      summary: Verify Nigeria CAC Business Registration (KYB)
+      description: "Verifies a Nigerian Corporate Affairs Commission registration (`RC`, `BN`, `IT`) and records state under `VR-CAC-{{id}}`."
+      operationId: verifyNigeriaCac
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              id: "1492819"
+              registration_type: RC
+              verification_consent: true
+      responses:
+        200:
+          description: Verify Nigeria CAC Business Registration (KYB) succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Verify Nigeria CAC Business Registration (KYB) succeeded
+                data:
+                  reference: "VR-CAC-1492819"
+                  id: "1492819"
+                  rc_number: "1492819"
+                  registration_type: RC
+                  company_name: KORA PAYMENTS LIMITED
+                  company_status: ACTIVE
+                  status: verified
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/identities/ng/tin":
+    post:
+      tags:
+        - "Identity KYB - Business"
+      summary: Verify Nigeria Corporate Tax Identification Number (TIN)
+      description: "Verifies a Nigerian FIRS/JTB Tax Identification Number and records state under `VR-TIN-{{id}}`."
+      operationId: verifyNigeriaTin
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              id: "12345678-0001"
+              verification_consent: true
+      responses:
+        200:
+          description: Verify Nigeria Corporate Tax Identification Number (TIN) succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Verify Nigeria Corporate Tax Identification Number (TIN) succeeded
+                data:
+                  reference: "VR-TIN-12345678-0001"
+                  id: "12345678-0001"
+                  tin: "12345678-0001"
+                  company_name: KORA PAYMENTS LIMITED
+                  tax_office: MSTO LEKKI
+                  status: verified
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/identities/ke/national-id":
+    post:
+      tags:
+        - "Identity KYC - Pan-Africa"
+      summary: Verify Kenya National ID
+      description: "Verifies a Kenyan National ID and records state under `VR-KE-ID-{{id}}`."
+      operationId: verifyKenyaNationalId
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              id: "12345678"
+              verification_consent: true
+      responses:
+        200:
+          description: Verify Kenya National ID succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Verify Kenya National ID succeeded
+                data:
+                  reference: "VR-KE-ID-12345678"
+                  id: "12345678"
+                  country: KE
+                  first_name: Jomo
+                  last_name: Kenyatta
+                  status: verified
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/identities/ke/kra-pin":
+    post:
+      tags:
+        - "Identity KYC - Pan-Africa"
+      summary: Verify Kenya KRA Tax PIN
+      description: "Verifies a Kenyan Revenue Authority PIN and records state under `VR-KE-KRA-{{id}}`."
+      operationId: verifyKenyaKraPin
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              id: A001234567Z
+              verification_consent: true
+      responses:
+        200:
+          description: Verify Kenya KRA Tax PIN succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Verify Kenya KRA Tax PIN succeeded
+                data:
+                  reference: "VR-KE-KRA-A001234567Z"
+                  id: A001234567Z
+                  country: KE
+                  taxpayer_name: JOMO KENYATTA
+                  status: verified
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/identities/ke/passport":
+    post:
+      tags:
+        - "Identity KYC - Pan-Africa"
+      summary: Verify Kenya Passport
+      description: "Verifies a Kenyan International Passport and records state under `VR-KE-PP-{{id}}`."
+      operationId: verifyKenyaPassport
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              id: AK123456
+              verification_consent: true
+      responses:
+        200:
+          description: Verify Kenya Passport succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Verify Kenya Passport succeeded
+                data:
+                  reference: "VR-KE-PP-AK123456"
+                  id: AK123456
+                  country: KE
+                  status: verified
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/identities/gh/ghana-card":
+    post:
+      tags:
+        - "Identity KYC - Pan-Africa"
+      summary: Verify Ghana Card (National ID)
+      description: "Verifies a Ghana Card (`GHA-XXXXXXXXX-X`) and records state under `VR-GH-CARD-{{id}}`."
+      operationId: verifyGhanaCard
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              id: "GHA-123456789-0"
+              verification_consent: true
+      responses:
+        200:
+          description: Verify Ghana Card (National ID) succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Verify Ghana Card (National ID) succeeded
+                data:
+                  reference: "VR-GH-CARD-GHA-123456789-0"
+                  id: "GHA-123456789-0"
+                  country: GH
+                  first_name: Kwame
+                  last_name: Mensah
+                  status: verified
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/identities/gh/ssnit":
+    post:
+      tags:
+        - "Identity KYC - Pan-Africa"
+      summary: Verify Ghana SSNIT Number
+      description: "Verifies a Ghana Social Security and National Insurance Trust number and records state under `VR-GH-ID-{{id}}`."
+      operationId: verifyGhanaSsnit
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              id: C001234567890
+              verification_consent: true
+      responses:
+        200:
+          description: Verify Ghana SSNIT Number succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Verify Ghana SSNIT Number succeeded
+                data:
+                  reference: "VR-GH-ID-C001234567890"
+                  id: C001234567890
+                  country: GH
+                  status: verified
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/identities/gh/voters-card":
+    post:
+      tags:
+        - "Identity KYC - Pan-Africa"
+      summary: "Verify Ghana Voter's Card"
+      description: "Verifies a Ghana Electoral Commission Voter ID and records state under `VR-GH-ID-{{id}}`."
+      operationId: verifyGhanaVotersCard
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              id: "2345678901"
+              verification_consent: true
+      responses:
+        200:
+          description: "Verify Ghana Voter's Card succeeded"
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: "Verify Ghana Voter's Card succeeded"
+                data:
+                  reference: "VR-GH-ID-2345678901"
+                  id: "2345678901"
+                  country: GH
+                  status: verified
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/identities/za/national-id":
+    post:
+      tags:
+        - "Identity KYC - Pan-Africa"
+      summary: Verify South Africa Smart National ID
+      description: "Verifies a 13-digit South African Smart National ID and records state under `VR-ZA-{{id}}`."
+      operationId: verifySouthAfricaNationalId
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              id: "8907085000081"
+              verification_consent: true
+      responses:
+        200:
+          description: Verify South Africa Smart National ID succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Verify South Africa Smart National ID succeeded
+                data:
+                  reference: "VR-ZA-8907085000081"
+                  id: "8907085000081"
+                  country: ZA
+                  first_name: Sipho
+                  last_name: Nkosi
+                  citizenship: ZA Citizen
+                  status: verified
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/identities/verifications/{reference}":
+    get:
+      tags:
+        - Identity Verification Management
+      summary: Get Verification Record by Reference (Stateful Lookup)
+      description: "Retrieves any previously verified KYC/KYB record (`VR-BVN-*`, `VR-CAC-*`, `VR-SCENARIO-001`, etc.) from `wiremock-state-extension` via `state-matcher` (`200 OK`) or returns `404 Not Found` if unknown."
+      operationId: getIdentityVerificationByReference
+      responses:
+        200:
+          description: Get Verification Record by Reference (Stateful Lookup) succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Get Verification Record by Reference (Stateful Lookup) succeeded
+                data:
+                  reference: "VR-BVN-11111111111"
+                  id: "11111111111"
+                  id_type: ng_bvn
+                  first_name: Trevor
+                  last_name: Mandela
+                  status: verified
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+        404:
+          $ref: "#/components/responses/NotFoundError"
+      parameters:
+        - name: reference
+          in: path
+          required: true
+          description: Resource reference
+          schema:
+            type: string
+          example: "VR-BVN-11111111111"
+  "/merchant/api/v1/identities/verifications":
+    get:
+      tags:
+        - Identity Verification Management
+      summary: List Identity Verification History
+      description: Returns a paginated list of historical identity verification records.
+      operationId: listIdentityVerifications
+      responses:
+        200:
+          description: List Identity Verification History succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: List Identity Verification History succeeded
+                data:
+                  - reference: "VR-BVN-11111111111"
+                    id: "11111111111"
+                    id_type: ng_bvn
+                    status: verified
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+    post:
+      tags:
+        - Identity Verification Management
+      summary: Filter Identity Verification History
+      description: Queries historical identity verification records with filter criteria.
+      operationId: filterIdentityVerifications
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              page: 1
+              per_page: 20
+      responses:
+        200:
+          description: Filter Identity Verification History succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Filter Identity Verification History succeeded
+                data:
+                  - reference: "VR-BVN-11111111111"
+                    id: "11111111111"
+                    id_type: ng_bvn
+                    status: verified
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/identities/verifications/documents":
+    post:
+      tags:
+        - Identity Verification Management
+      summary: Verify Identity Document Authenticity
+      description: Performs optical and biometric authenticity verification on an uploaded identity document.
+      operationId: verifyIdentityDocument
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              document_type: passport
+              country: NG
+              document_image: base64_encoded_image_data
+      responses:
+        200:
+          description: Verify Identity Document Authenticity succeeded
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: Verify Identity Document Authenticity succeeded
+                data:
+                  reference: "VR-DOC-001"
+                  status: verified
+                  authenticity_score: 98.2
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+  "/merchant/api/v1/identities/verifications/consent":
+    post:
+      tags:
+        - Identity Verification Management
+      summary: "Confirm Customer Verification Consent (Scenario: Identity-Verification-Lifecycle)"
+      description: "Transitions `Identity-Verification-Lifecycle` from `Pending_Consent` to `Verified` for `reference: \"VR-SCENARIO-001\"`."
+      operationId: confirmIdentityConsent
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+            example:
+              reference: "VR-SCENARIO-001"
+              otp: "123456"
+      responses:
+        200:
+          description: "Confirm Customer Verification Consent (Scenario: Identity-Verification-Lifecycle) succeeded"
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/KoraStandardResponse"
+              example:
+                status: true
+                message: "Confirm Customer Verification Consent (Scenario: Identity-Verification-Lifecycle) succeeded"
+                data:
+                  reference: "VR-SCENARIO-001"
+                  id: "ID-SCENARIO-001"
+                  status: verified
+        400:
+          $ref: "#/components/responses/BadRequestError"
+        401:
+          $ref: "#/components/responses/UnauthorizedError"
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: "Kora API Key (sk_test_* / pk_test_* / sk_live_* / pk_live_*)"
+      description: "Enter a valid Kora secret or public key, e.g. `sk_test_kora_stateful_mock_2025`."
+  schemas:
+    KoraStandardResponse:
+      type: object
+      required:
+        - status
+        - message
+        - data
+      properties:
+        status:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Operation completed successfully
+        data:
+          type: object
+          nullable: true
+    KoraErrorResponse:
+      type: object
+      required:
+        - status
+        - message
+        - data
+      properties:
+        status:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Error message describing failure
+        data:
+          type: object
+          nullable: true
+          example: null
+  responses:
+    UnauthorizedError:
+      description: "Missing or malformed Bearer API key (`sk_test_*` / `pk_test_*`)."
+      content:
+        "application/json":
+          schema:
+            $ref: "#/components/schemas/KoraErrorResponse"
+          example:
+            status: false
+            message: Unauthorized. Bearer token is missing.
+            data: null
+    BadRequestError:
+      description: "Validation error, duplicate idempotent reference, invalid OTP, or missing customer consent."
+      content:
+        "application/json":
+          schema:
+            $ref: "#/components/schemas/KoraErrorResponse"
+          example:
+            status: false
+            message: Invalid request parameters or missing customer consent.
+            data: null
+    NotFoundError:
+      description: Requested resource reference was not found in WireMock state.
+      content:
+        "application/json":
+          schema:
+            $ref: "#/components/schemas/KoraErrorResponse"
+          example:
+            status: false
+            message: Resource with the specified reference was not found.
+            data: null

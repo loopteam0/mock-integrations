@@ -1,0 +1,58 @@
+{
+  "mappings": [
+    {
+      "id": "00000000-0000-0000-0015-000000000001",
+      "name": "Fetch Bulk Payout Batch by Reference - Found in State Extension",
+      "priority": 5,
+      "request": {
+        "method": "GET",
+        "urlPathTemplate": "/merchant/api/v1/transactions/bulk/{batch_reference}",
+        "customMatcher": {
+          "name": "state-matcher",
+          "parameters": {
+            "hasContext": "{{request.path.batch_reference}}"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Bulk payout batch retrieved successfully\",\n  \"data\": {\n    \"batch_reference\": \"{{state context=request.path.batch_reference property='batch_reference' default=request.path.batch_reference}}\",\n    \"status\": \"{{state context=request.path.batch_reference property='status' default='processing'}}\",\n    \"currency\": \"{{state context=request.path.batch_reference property='currency' default='NGN'}}\",\n    \"description\": \"{{state context=request.path.batch_reference property='description' default='Bulk Payout'}}\",\n    \"total_chargeable_amount\": 150000.0,\n    \"successful_transactions\": 1,\n    \"failed_transactions\": 0,\n    \"pending_transactions\": 0,\n    \"created_at\": \"{{state context=request.path.batch_reference property='createdAt' default='2025-01-01T00:00:00Z'}}\"\n  }\n}"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0015-000000000002",
+      "name": "Fetch Bulk Payout Batch by Reference - Not Found (404)",
+      "priority": 10,
+      "request": {
+        "method": "GET",
+        "urlPathTemplate": "/merchant/api/v1/transactions/bulk/{batch_reference}"
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": false,\n  \"message\": \"Bulk payout batch '{{request.path.batch_reference}}' was not found.\",\n  \"data\": null\n}"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0015-000000000003",
+      "name": "Fetch Payouts in a Bulk Batch",
+      "priority": 5,
+      "request": {
+        "method": "GET",
+        "urlPathTemplate": "/merchant/api/v1/transactions/bulk/{batch_reference}/payout"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Bulk payouts retrieved successfully\",\n  \"data\": [\n    {\n      \"reference\": \"BULK-ITEM-1\",\n      \"batch_reference\": \"{{request.path.batch_reference}}\",\n      \"amount\": \"50000.00\",\n      \"fee\": \"50.00\",\n      \"currency\": \"NGN\",\n      \"status\": \"success\",\n      \"narration\": \"Salary 1\",\n      \"customer\": {\n        \"name\": \"Staff One\",\n        \"email\": \"staff1@kora.test\"\n      }\n    }\n  ],\n  \"pagination\": {\n    \"page\": 1,\n    \"per_page\": 20,\n    \"total\": 1,\n    \"total_pages\": 1\n  }\n}"
+      }
+    }
+  ]
+}

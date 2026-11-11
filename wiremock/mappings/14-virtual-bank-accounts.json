@@ -1,0 +1,126 @@
+{
+  "mappings": [
+    {
+      "id": "00000000-0000-0000-0014-000000000001",
+      "name": "Create Virtual Bank Account - Dynamic State Recording",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPath": "/merchant/api/v1/virtual-bank-account",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$.account_reference"
+          },
+          {
+            "matchesJsonPath": "$.account_name"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Virtual bank account created successfully\",\n  \"data\": {\n    \"account_name\": \"{{jsonPath request.body '$.account_name'}}\",\n    \"account_number\": \"0657789765\",\n    \"bank_code\": \"{{val (jsonPath request.body '$.bank_code') default='070'}}\",\n    \"bank_name\": \"Fidelity Bank\",\n    \"account_reference\": \"{{jsonPath request.body '$.account_reference'}}\",\n    \"unique_id\": \"KPY-VBA-{{jsonPath request.body '$.account_reference'}}\",\n    \"account_status\": \"active\",\n    \"created_at\": \"{{now format='yyyy-MM-dd\\'T\\'HH:mm:ss\\'Z\\''}}\",\n    \"currency\": \"{{val (jsonPath request.body '$.currency') default='NGN'}}\",\n    \"customer\": {\n      \"name\": \"{{val (jsonPath request.body '$.customer.name') default='VBA Customer'}}\",\n      \"email\": \"{{val (jsonPath request.body '$.customer.email') default='vba@kora.test'}}\"\n    }\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "{{jsonPath request.body '$.account_reference'}}",
+            "state": {
+              "account_reference": "{{jsonPath request.body '$.account_reference'}}",
+              "account_name": "{{jsonPath request.body '$.account_name'}}",
+              "account_number": "0657789765",
+              "bank_code": "{{val (jsonPath request.body '$.bank_code') default='070'}}",
+              "bank_name": "Fidelity Bank",
+              "account_status": "active",
+              "currency": "{{val (jsonPath request.body '$.currency') default='NGN'}}",
+              "customerName": "{{val (jsonPath request.body '$.customer.name') default='VBA Customer'}}",
+              "customerEmail": "{{val (jsonPath request.body '$.customer.email') default='vba@kora.test'}}",
+              "createdAt": "{{now format='yyyy-MM-dd\\'T\\'HH:mm:ss\\'Z\\''}}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0014-000000000002",
+      "name": "List Virtual Bank Account Transactions (Static Path Priority 3)",
+      "priority": 3,
+      "request": {
+        "method": "GET",
+        "urlPath": "/merchant/api/v1/virtual-bank-account/transactions"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Virtual bank account transactions retrieved successfully\",\n  \"data\": {\n    \"total_amount_received\": 15000.0,\n    \"account_number\": \"{{val request.query.account_number default='0657789765'}}\",\n    \"currency\": \"NGN\",\n    \"transactions\": [\n      {\n        \"reference\": \"KPY-VBA-TX-001\",\n        \"status\": \"success\",\n        \"amount\": \"15000.00\",\n        \"fee\": \"150.00\",\n        \"currency\": \"NGN\",\n        \"description\": \"Inward Transfer to Virtual Account\",\n        \"payer_bank_account\": {\n          \"account_name\": \"ALICE WONDERLAND\",\n          \"account_number\": \"0123456789\",\n          \"bank_name\": \"Guaranty Trust Bank\"\n        }\n      }\n    ],\n    \"pagination\": {\n      \"page\": 1,\n      \"total\": 1,\n      \"per_page\": 20,\n      \"total_pages\": 1\n    }\n  }\n}"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0014-000000000003",
+      "name": "Get Virtual Bank Account by Reference - Found in State Extension",
+      "priority": 5,
+      "request": {
+        "method": "GET",
+        "urlPathTemplate": "/merchant/api/v1/virtual-bank-account/{account_reference}",
+        "customMatcher": {
+          "name": "state-matcher",
+          "parameters": {
+            "hasContext": "{{request.path.account_reference}}"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Virtual bank account retrieved successfully\",\n  \"data\": {\n    \"account_name\": \"{{state context=request.path.account_reference property='account_name' default='VBA Account'}}\",\n    \"account_number\": \"{{state context=request.path.account_reference property='account_number' default='0657789765'}}\",\n    \"bank_code\": \"{{state context=request.path.account_reference property='bank_code' default='070'}}\",\n    \"bank_name\": \"{{state context=request.path.account_reference property='bank_name' default='Fidelity Bank'}}\",\n    \"account_reference\": \"{{state context=request.path.account_reference property='account_reference' default=request.path.account_reference}}\",\n    \"unique_id\": \"KPY-VBA-{{request.path.account_reference}}\",\n    \"account_status\": \"{{state context=request.path.account_reference property='account_status' default='active'}}\",\n    \"created_at\": \"{{state context=request.path.account_reference property='createdAt' default='2025-01-01T00:00:00Z'}}\",\n    \"currency\": \"{{state context=request.path.account_reference property='currency' default='NGN'}}\",\n    \"customer\": {\n      \"name\": \"{{state context=request.path.account_reference property='customerName' default='VBA Customer'}}\",\n      \"email\": \"{{state context=request.path.account_reference property='customerEmail' default='vba@kora.test'}}\"\n    }\n  }\n}"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0014-000000000004",
+      "name": "Get Virtual Bank Account by Reference - Not Found (404)",
+      "priority": 10,
+      "request": {
+        "method": "GET",
+        "urlPathTemplate": "/merchant/api/v1/virtual-bank-account/{account_reference}"
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": false,\n  \"message\": \"Virtual bank account with reference '{{request.path.account_reference}}' was not found.\",\n  \"data\": null\n}"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0014-000000000005",
+      "name": "Credit Sandbox Virtual Bank Account",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPath": "/merchant/api/v1/virtual-bank-account/sandbox/credit",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$.account_number"
+          },
+          {
+            "matchesJsonPath": "$.amount"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Sandbox virtual bank account credited successfully\",\n  \"data\": {\n    \"account_number\": \"{{jsonPath request.body '$.account_number'}}\",\n    \"amount\": \"{{jsonPath request.body '$.amount'}}\",\n    \"currency\": \"{{val (jsonPath request.body '$.currency') default='NGN'}}\",\n    \"status\": \"success\"\n  }\n}"
+      }
+    }
+  ]
+}

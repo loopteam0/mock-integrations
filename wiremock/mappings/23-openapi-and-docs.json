@@ -1,0 +1,74 @@
+{
+  "mappings": [
+    {
+      "id": "00000000-0000-0000-0023-000000000001",
+      "name": "Serve OpenAPI 3.0.3 JSON Specification",
+      "priority": 5,
+      "request": {
+        "method": "ANY",
+        "urlPathPattern": "^/(api-docs/)?openapi\\.json$"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS"
+        },
+        "bodyFileName": "openapi.json"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0023-000000000002",
+      "name": "Serve OpenAPI 3.0.3 YAML Specification",
+      "priority": 5,
+      "request": {
+        "method": "ANY",
+        "urlPathPattern": "^/(api-docs/)?openapi\\.ya?ml$"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/yaml",
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS"
+        },
+        "bodyFileName": "openapi.yaml"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0023-000000000003",
+      "name": "Serve Interactive Swagger UI Portal (/docs, /swagger, /)",
+      "priority": 5,
+      "request": {
+        "method": "ANY",
+        "urlPathPattern": "^/(docs/?|swagger|)$"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "text/html; charset=utf-8",
+          "Cache-Control": "no-cache"
+        },
+        "bodyFileName": "docs.html"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0023-000000000004",
+      "name": "Serve Redoc Reference Documentation (/redoc)",
+      "priority": 5,
+      "request": {
+        "method": "ANY",
+        "urlPathPattern": "^/redoc/?$"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "text/html; charset=utf-8",
+          "Cache-Control": "no-cache"
+        },
+        "bodyFileName": "redoc.html"
+      }
+    }
+  ]
+}

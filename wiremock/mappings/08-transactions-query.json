@@ -1,0 +1,120 @@
+{
+  "mappings": [
+    {
+      "id": "00000000-0000-0000-0008-000000000001",
+      "name": "Query Payout Transaction by Reference - Found in State Extension",
+      "priority": 5,
+      "request": {
+        "method": "GET",
+        "urlPathTemplate": "/merchant/api/v1/transactions/{reference}",
+        "customMatcher": {
+          "name": "state-matcher",
+          "parameters": {
+            "hasContext": "{{request.path.reference}}"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Payout retrieved successfully\",\n  \"data\": {\n    \"reference\": \"{{state context=request.path.reference property='reference' default=request.path.reference}}\",\n    \"amount\": \"{{state context=request.path.reference property='amount' default='0.00'}}\",\n    \"fee\": \"50.00\",\n    \"currency\": \"{{state context=request.path.reference property='currency' default='NGN'}}\",\n    \"status\": \"{{state context=request.path.reference property='status' default='success'}}\",\n    \"narration\": \"{{state context=request.path.reference property='narration' default='Payout Disbursement'}}\",\n    \"created_at\": \"{{state context=request.path.reference property='createdAt' default='2025-01-01T00:00:00Z'}}\",\n    \"customer\": {\n      \"name\": \"{{state context=request.path.reference property='customerName' default='Beneficiary'}}\",\n      \"email\": \"{{state context=request.path.reference property='customerEmail' default='beneficiary@kora.test'}}\"\n    }\n  }\n}"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0008-000000000002",
+      "name": "Query Payout Transaction by Reference - Not Found (404)",
+      "priority": 10,
+      "request": {
+        "method": "GET",
+        "urlPathTemplate": "/merchant/api/v1/transactions/{reference}"
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": false,\n  \"message\": \"Transaction with reference '{{request.path.reference}}' was not found.\",\n  \"data\": null\n}"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0008-000000000003",
+      "name": "List Payout Transactions",
+      "priority": 5,
+      "request": {
+        "method": "GET",
+        "urlPath": "/merchant/api/v1/transactions"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": true,
+          "message": "Transactions retrieved successfully",
+          "data": [
+            {
+              "reference": "PAYOUT-DYN-001",
+              "amount": "50000",
+              "fee": "50.00",
+              "currency": "NGN",
+              "status": "success",
+              "narration": "Contractor Payout",
+              "customer": {
+                "name": "Ebuka Ciroma",
+                "email": "ebuka@kora.test"
+              }
+            }
+          ],
+          "pagination": {
+            "page": 1,
+            "per_page": 20,
+            "total": 1,
+            "total_pages": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0008-000000000004",
+      "name": "List Payouts Alias",
+      "priority": 5,
+      "request": {
+        "method": "GET",
+        "urlPath": "/merchant/api/v1/payouts"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": true,
+          "message": "Transactions retrieved successfully",
+          "data": [
+            {
+              "reference": "PAYOUT-DYN-001",
+              "amount": "50000",
+              "fee": "50.00",
+              "currency": "NGN",
+              "status": "success",
+              "narration": "Contractor Payout",
+              "customer": {
+                "name": "Ebuka Ciroma",
+                "email": "ebuka@kora.test"
+              }
+            }
+          ],
+          "pagination": {
+            "page": 1,
+            "per_page": 20,
+            "total": 1,
+            "total_pages": 1
+          }
+        }
+      }
+    }
+  ]
+}

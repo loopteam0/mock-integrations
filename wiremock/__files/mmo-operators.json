@@ -1,0 +1,55 @@
+{
+  "status": true,
+  "message": "Mobile money operators retrieved successfully",
+  "data": [
+    {
+      "name": "MTN Mobile Money Ghana",
+      "slug": "mtn-gh",
+      "code": "mtn-gh",
+      "country": "GH",
+      "currency": "GHS"
+    },
+    {
+      "name": "Vodafone Cash Ghana",
+      "slug": "vodafone-gh",
+      "code": "vodafone-gh",
+      "country": "GH",
+      "currency": "GHS"
+    },
+    {
+      "name": "AirtelTigo Money Ghana",
+      "slug": "airteltigo-gh",
+      "code": "airteltigo-gh",
+      "country": "GH",
+      "currency": "GHS"
+    },
+    {
+      "name": "Safaricom M-Pesa Kenya",
+      "slug": "safaricom-ke",
+      "code": "safaricom-ke",
+      "country": "KE",
+      "currency": "KES"
+    },
+    {
+      "name": "Airtel Money Kenya",
+      "slug": "airtel-ke",
+      "code": "airtel-ke",
+      "country": "KE",
+      "currency": "KES"
+    },
+    {
+      "name": "Orange Money Cote d'Ivoire",
+      "slug": "orange-ci",
+      "code": "orange-ci",
+      "country": "CI",
+      "currency": "XOF"
+    },
+    {
+      "name": "MTN Mobile Money Cameroon",
+      "slug": "mtn-cm",
+      "code": "mtn-cm",
+      "country": "CM",
+      "currency": "XAF"
+    }
+  ]
+}

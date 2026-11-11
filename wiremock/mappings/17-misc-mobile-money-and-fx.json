@@ -1,0 +1,68 @@
+{
+  "mappings": [
+    {
+      "id": "00000000-0000-0000-0017-000000000001",
+      "name": "List Mobile Money Operators",
+      "priority": 5,
+      "request": {
+        "method": "GET",
+        "urlPath": "/merchant/api/v1/misc/mobile-money/operators"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "bodyFileName": "mmo-operators.json"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0017-000000000002",
+      "name": "Resolve Mobile Money Account",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPath": "/merchant/api/v1/misc/mobile-money/resolve"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Mobile money account resolved successfully\",\n  \"data\": {\n    \"account_name\": \"KWAME MENSAH\",\n    \"phoneNumber\": \"{{val (jsonPath request.body '$.phoneNumber') default='0241234567'}}\",\n    \"mobileMoneyCode\": \"{{val (jsonPath request.body '$.mobileMoneyCode') default='mtn-gh'}}\"\n  }\n}"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0017-000000000003",
+      "name": "Get FX Conversion Rates",
+      "priority": 5,
+      "request": {
+        "method": "GET",
+        "urlPath": "/merchant/api/v1/conversions/rates"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Conversion rate retrieved successfully\",\n  \"data\": {\n    \"from_currency\": \"{{val request.query.from default='USD'}}\",\n    \"to_currency\": \"{{val request.query.to default='NGN'}}\",\n    \"rate\": \"1550.00\",\n    \"inverse_rate\": \"0.000645\"\n  }\n}"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0017-000000000004",
+      "name": "Execute Currency Conversion",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPath": "/merchant/api/v1/conversions"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Currency conversion completed successfully\",\n  \"data\": {\n    \"reference\": \"{{val (jsonPath request.body '$.reference') default='CONV-001'}}\",\n    \"from_currency\": \"{{val (jsonPath request.body '$.from_currency') default='USD'}}\",\n    \"to_currency\": \"{{val (jsonPath request.body '$.to_currency') default='NGN'}}\",\n    \"amount\": \"{{val (jsonPath request.body '$.amount') default='100'}}\",\n    \"converted_amount\": \"155000.00\",\n    \"rate\": \"1550.00\",\n    \"status\": \"success\"\n  }\n}"
+      }
+    }
+  ]
+}

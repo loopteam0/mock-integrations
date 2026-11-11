@@ -1,0 +1,41 @@
+{
+  "status": true,
+  "message": "Pay with Bank supported banks retrieved successfully",
+  "data": [
+    {
+      "name": "ABSA Bank",
+      "slug": "absa-bank",
+      "code": "632005",
+      "country": "ZA",
+      "currency": "ZAR"
+    },
+    {
+      "name": "First National Bank (FNB)",
+      "slug": "first-national-bank",
+      "code": "250655",
+      "country": "ZA",
+      "currency": "ZAR"
+    },
+    {
+      "name": "Nedbank",
+      "slug": "nedbank",
+      "code": "198765",
+      "country": "ZA",
+      "currency": "ZAR"
+    },
+    {
+      "name": "Standard Bank",
+      "slug": "standard-bank",
+      "code": "051001",
+      "country": "ZA",
+      "currency": "ZAR"
+    },
+    {
+      "name": "Capitec Bank",
+      "slug": "capitec-bank",
+      "code": "470010",
+      "country": "ZA",
+      "currency": "ZAR"
+    }
+  ]
+}

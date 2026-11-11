@@ -1,0 +1,50 @@
+{
+  "mappings": [
+    {
+      "id": "00000000-0000-0000-0002-000000000001",
+      "name": "Charge via Bank Transfer - Dynamic State Recording",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPath": "/merchant/api/v1/charges/bank-transfer",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$.reference"
+          },
+          {
+            "matchesJsonPath": "$.amount"
+          },
+          {
+            "matchesJsonPath": "$.currency"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Bank transfer initiated successfully\",\n  \"data\": {\n    \"currency\": \"{{jsonPath request.body '$.currency'}}\",\n    \"amount\": \"{{jsonPath request.body '$.amount'}}\",\n    \"amount_expected\": \"{{jsonPath request.body '$.amount'}}\",\n    \"fee\": 150.0,\n    \"vat\": 11.25,\n    \"reference\": \"{{jsonPath request.body '$.reference'}}\",\n    \"payment_reference\": \"KPY-BT-{{randomValue length=8 type='ALPHANUMERIC' uppercase=true}}\",\n    \"status\": \"processing\",\n    \"narration\": \"{{val (jsonPath request.body '$.narration') default='Bank Transfer Payment'}}\",\n    \"merchant_bears_cost\": true,\n    \"bank_account\": {\n      \"account_name\": \"{{val (jsonPath request.body '$.account_name') default='Kora Virtual Account'}}\",\n      \"account_number\": \"78{{randomValue length=8 type='NUMERIC'}}\",\n      \"bank_code\": \"035\",\n      \"bank_name\": \"Wema Bank\",\n      \"expiry_date_in_utc\": \"{{now offset='1 hours' format='yyyy-MM-dd\\'T\\'HH:mm:ss\\'Z\\''}}\"\n    },\n    \"customer\": {\n      \"name\": \"{{val (jsonPath request.body '$.customer.name') default='Kora Customer'}}\",\n      \"email\": \"{{val (jsonPath request.body '$.customer.email') default='customer@kora.test'}}\"\n    }\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "{{jsonPath request.body '$.reference'}}",
+            "state": {
+              "reference": "{{jsonPath request.body '$.reference'}}",
+              "amount": "{{jsonPath request.body '$.amount'}}",
+              "currency": "{{jsonPath request.body '$.currency'}}",
+              "customerName": "{{val (jsonPath request.body '$.customer.name') default='Kora Customer'}}",
+              "customerEmail": "{{val (jsonPath request.body '$.customer.email') default='customer@kora.test'}}",
+              "narration": "{{val (jsonPath request.body '$.narration') default='Bank Transfer Payment'}}",
+              "paymentMethod": "bank_transfer",
+              "status": "success",
+              "createdAt": "{{now format='yyyy-MM-dd\\'T\\'HH:mm:ss\\'Z\\''}}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

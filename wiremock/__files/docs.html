@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kora (Korapay) API — Interactive Swagger UI & Stateful Mock Server</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .kora-topbar {
+      background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      padding: 14px 28px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 3px solid #2563eb;
+    }
+    .kora-topbar-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .kora-badge {
+      background-color: #22c55e;
+      color: #052e16;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+    }
+    .kora-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+    }
+    .kora-key-pill {
+      background-color: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: #93c5fd;
+    }
+    .kora-links a {
+      color: #e2e8f0;
+      text-decoration: none;
+      background-color: #334155;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: 600;
+      transition: background-color 0.15s ease;
+    }
+    .kora-links a:hover {
+      background-color: #2563eb;
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+  <header class="kora-topbar">
+    <div class="kora-topbar-title">
+      <span>Kora (Korapay) API Stateful Mock Server</span>
+      <span class="kora-badge">Live • http://localhost:8080</span>
+    </div>
+    <div class="kora-meta">
+      <span class="kora-key-pill">Pre-authorized Key: Bearer sk_test_kora_stateful_mock_2025</span>
+      <span class="kora-links">
+        <a href="/redoc">Redoc Reference</a>
+        <a href="/openapi.json" target="_blank">openapi.json</a>
+        <a href="/openapi.yaml" target="_blank">openapi.yaml</a>
+      </span>
+    </div>
+  </header>
+
+  <div id="swagger-ui"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+  <script>
+    window.onload = function() {
+      const ui = SwaggerUIBundle({
+        url: "/openapi.json",
+        dom_id: "#swagger-ui",
+        deepLinking: true,
+        persistAuthorization: true,
+        displayRequestDuration: true,
+        filter: true,
+        tryItOutEnabled: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        layout: "BaseLayout",
+        onComplete: function() {
+          ui.preauthorizeApiKey("BearerAuth", "sk_test_kora_stateful_mock_2025");
+        }
+      });
+      window.ui = ui;
+    };
+  </script>
+</body>
+</html>

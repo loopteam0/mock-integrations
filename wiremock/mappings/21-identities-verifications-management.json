@@ -1,0 +1,140 @@
+{
+  "mappings": [
+    {
+      "id": "00000000-0000-0000-0021-000000000001",
+      "name": "Query Identity Verification by Reference (/merchant/api/v1) - Found in State Extension",
+      "priority": 5,
+      "request": {
+        "method": "GET",
+        "urlPathTemplate": "/merchant/api/v1/identities/verifications/{reference}",
+        "customMatcher": {
+          "name": "state-matcher",
+          "parameters": {
+            "hasContext": "{{request.path.reference}}"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Verification retrieved successfully\",\n  \"data\": {\n    \"reference\": \"{{request.path.reference}}\",\n    \"id\": \"{{state context=request.path.reference property='id' default='UNKNOWN'}}\",\n    \"id_type\": \"{{state context=request.path.reference property='id_type' default='ng_bvn'}}\",\n    \"first_name\": \"{{state context=request.path.reference property='first_name' default='Trevor'}}\",\n    \"last_name\": \"{{state context=request.path.reference property='last_name' default='Mandela'}}\",\n    \"status\": \"{{state context=request.path.reference property='status' default='verified'}}\"\n  }\n}"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0021-000000000002",
+      "name": "Query Identity Verification by Reference (/api/v1) - Found in State Extension",
+      "priority": 5,
+      "request": {
+        "method": "GET",
+        "urlPathTemplate": "/api/v1/identities/verifications/{reference}",
+        "customMatcher": {
+          "name": "state-matcher",
+          "parameters": {
+            "hasContext": "{{request.path.reference}}"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Verification retrieved successfully\",\n  \"data\": {\n    \"reference\": \"{{request.path.reference}}\",\n    \"id\": \"{{state context=request.path.reference property='id' default='UNKNOWN'}}\",\n    \"id_type\": \"{{state context=request.path.reference property='id_type' default='ng_bvn'}}\",\n    \"first_name\": \"{{state context=request.path.reference property='first_name' default='Trevor'}}\",\n    \"last_name\": \"{{state context=request.path.reference property='last_name' default='Mandela'}}\",\n    \"status\": \"{{state context=request.path.reference property='status' default='verified'}}\"\n  }\n}"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0021-000000000003",
+      "name": "Query Identity Verification by Reference (/merchant/api/v1) - Not Found (404)",
+      "priority": 10,
+      "request": {
+        "method": "GET",
+        "urlPathTemplate": "/merchant/api/v1/identities/verifications/{reference}"
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": false,\n  \"message\": \"Verification record '{{request.path.reference}}' not found\",\n  \"data\": null\n}"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0021-000000000004",
+      "name": "Query Identity Verification by Reference (/api/v1) - Not Found (404)",
+      "priority": 10,
+      "request": {
+        "method": "GET",
+        "urlPathTemplate": "/api/v1/identities/verifications/{reference}"
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": false,\n  \"message\": \"Verification record '{{request.path.reference}}' not found\",\n  \"data\": null\n}"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0021-000000000005",
+      "name": "List Identity Verification History (GET / POST)",
+      "priority": 5,
+      "request": {
+        "method": "ANY",
+        "urlPathPattern": "^/(merchant/)?api/v1/identities/verifications$"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": true,
+          "message": "Verification history retrieved successfully",
+          "data": [
+            {
+              "reference": "VR-BVN-11111111111",
+              "id": "11111111111",
+              "id_type": "ng_bvn",
+              "first_name": "Trevor",
+              "last_name": "Mandela",
+              "status": "verified",
+              "created_at": "2025-01-15T10:00:00Z"
+            }
+          ],
+          "pagination": {
+            "page": 1,
+            "per_page": 20,
+            "total": 1,
+            "total_pages": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0021-000000000006",
+      "name": "Document Authenticity Verification",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "^/(merchant/)?api/v1/identities/verifications/documents$"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": true,
+          "message": "Document verification completed",
+          "data": {
+            "reference": "VR-DOC-001",
+            "status": "verified",
+            "authenticity_score": 98.2
+          }
+        }
+      }
+    }
+  ]
+}

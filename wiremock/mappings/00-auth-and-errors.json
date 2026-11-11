@@ -1,0 +1,74 @@
+{
+  "mappings": [
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "name": "Auth Guard - Missing Authorization Header",
+      "priority": 1,
+      "request": {
+        "method": "ANY",
+        "urlPattern": "^/(merchant/)?api/v1/.*",
+        "headers": {
+          "Authorization": {
+            "absent": true
+          }
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": false,
+          "message": "Unauthorized. Bearer token is missing.",
+          "data": null
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000002",
+      "name": "Auth Guard - Malformed Authorization Header",
+      "priority": 2,
+      "request": {
+        "method": "ANY",
+        "urlPattern": "^/(merchant/)?api/v1/.*",
+        "headers": {
+          "Authorization": {
+            "doesNotMatch": "^Bearer\\s+(sk|pk)_(test|live)_[A-Za-z0-9_\\-\\.]+$"
+          }
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": false,
+          "message": "Invalid API key format. Expected 'Bearer sk_test_...' or 'Bearer pk_test_...'.",
+          "data": null
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000003",
+      "name": "Global Fallback - Unmatched Route under /(merchant/)?api/v1/",
+      "priority": 20,
+      "request": {
+        "method": "ANY",
+        "urlPattern": "^/(merchant/)?api/v1/.*"
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": false,
+          "message": "Endpoint or resource not found.",
+          "data": null
+        }
+      }
+    }
+  ]
+}

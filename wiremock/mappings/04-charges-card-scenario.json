@@ -1,0 +1,241 @@
+{
+  "mappings": [
+    {
+      "id": "00000000-0000-0000-0004-000000000001",
+      "name": "Card Charge Lifecycle - Step 1: Initiate Card Charge (Started -> Pending_OTP)",
+      "priority": 3,
+      "scenarioName": "Card-Charge-Lifecycle",
+      "requiredScenarioState": "Started",
+      "newScenarioState": "Pending_OTP",
+      "request": {
+        "method": "POST",
+        "urlPath": "/merchant/api/v1/charges/card"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": true,
+          "message": "Card charge initiated. OTP authorization required.",
+          "data": {
+            "transaction_reference": "CARD-SCENARIO-001",
+            "payment_reference": "CARD-SCENARIO-001",
+            "reference": "CARD-SCENARIO-001",
+            "currency": "NGN",
+            "amount": 12500.0,
+            "fee": 187.5,
+            "vat": 14.06,
+            "status": "processing",
+            "auth_model": "OTP",
+            "response_message": "Kindly enter the OTP sent to your mobile number"
+          }
+        }
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "CARD-SCENARIO-001",
+            "state": {
+              "reference": "CARD-SCENARIO-001",
+              "amount": "12500.00",
+              "currency": "NGN",
+              "customerName": "Card Scenario Customer",
+              "customerEmail": "card.user@kora.test",
+              "narration": "Card Scenario Payment",
+              "paymentMethod": "card",
+              "status": "processing",
+              "createdAt": "{{now format='yyyy-MM-dd\\'T\\'HH:mm:ss\\'Z\\''}}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0004-000000000002",
+      "name": "Card Charge Lifecycle - Step 2a: Authorize with Invalid OTP 00000 (Remains Pending_OTP)",
+      "priority": 3,
+      "scenarioName": "Card-Charge-Lifecycle",
+      "requiredScenarioState": "Pending_OTP",
+      "newScenarioState": "Pending_OTP",
+      "request": {
+        "method": "POST",
+        "urlPath": "/merchant/api/v1/charges/card/authorize",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$[?(@.transaction_reference == 'CARD-SCENARIO-001')]"
+          },
+          {
+            "matchesJsonPath": "$[?(@.authorization.otp == '00000')]"
+          }
+        ]
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": false,
+          "message": "Invalid OTP provided. Please try again.",
+          "error": "invalid_otp",
+          "data": {
+            "transaction_reference": "CARD-SCENARIO-001",
+            "status": "processing"
+          }
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0004-000000000003",
+      "name": "Card Charge Lifecycle - Step 2b: Authorize with Valid OTP 12345 (Pending_OTP -> Succeeded)",
+      "priority": 3,
+      "scenarioName": "Card-Charge-Lifecycle",
+      "requiredScenarioState": "Pending_OTP",
+      "newScenarioState": "Succeeded",
+      "request": {
+        "method": "POST",
+        "urlPath": "/merchant/api/v1/charges/card/authorize",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$[?(@.transaction_reference == 'CARD-SCENARIO-001')]"
+          },
+          {
+            "matchesJsonPath": "$[?(@.authorization.otp == '12345')]"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": true,
+          "message": "Card charge authorized successfully",
+          "data": {
+            "transaction_reference": "CARD-SCENARIO-001",
+            "payment_reference": "CARD-SCENARIO-001",
+            "reference": "CARD-SCENARIO-001",
+            "currency": "NGN",
+            "amount": 12500.0,
+            "fee": 187.5,
+            "vat": 14.06,
+            "status": "success",
+            "auth_model": "NO_AUTH",
+            "response_message": "Approved by Financial Institution"
+          }
+        }
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "CARD-SCENARIO-001",
+            "state": {
+              "reference": "CARD-SCENARIO-001",
+              "amount": "12500.00",
+              "currency": "NGN",
+              "customerName": "Card Scenario Customer",
+              "customerEmail": "card.user@kora.test",
+              "narration": "Card Scenario Payment",
+              "paymentMethod": "card",
+              "status": "success",
+              "createdAt": "{{now format='yyyy-MM-dd\\'T\\'HH:mm:ss\\'Z\\''}}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0004-000000000004",
+      "name": "Card Charge Lifecycle - Query Card Charge While Pending_OTP",
+      "priority": 3,
+      "scenarioName": "Card-Charge-Lifecycle",
+      "requiredScenarioState": "Pending_OTP",
+      "request": {
+        "method": "GET",
+        "urlPath": "/merchant/api/v1/charges/CARD-SCENARIO-001"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": true,
+          "message": "Charge retrieved successfully",
+          "data": {
+            "reference": "CARD-SCENARIO-001",
+            "payment_reference": "CARD-SCENARIO-001",
+            "currency": "NGN",
+            "amount": "12500.00",
+            "fee": 187.5,
+            "vat": 14.06,
+            "status": "processing",
+            "payment_method": "card",
+            "description": "Card Scenario Payment",
+            "customer": {
+              "name": "Card Scenario Customer",
+              "email": "card.user@kora.test"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0004-000000000005",
+      "name": "Card Charge Lifecycle - Query Card Charge When Succeeded",
+      "priority": 3,
+      "scenarioName": "Card-Charge-Lifecycle",
+      "requiredScenarioState": "Succeeded",
+      "request": {
+        "method": "GET",
+        "urlPath": "/merchant/api/v1/charges/CARD-SCENARIO-001"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": true,
+          "message": "Charge retrieved successfully",
+          "data": {
+            "reference": "CARD-SCENARIO-001",
+            "payment_reference": "CARD-SCENARIO-001",
+            "currency": "NGN",
+            "amount": "12500.00",
+            "fee": 187.5,
+            "vat": 14.06,
+            "status": "success",
+            "payment_method": "card",
+            "description": "Card Scenario Payment",
+            "customer": {
+              "name": "Card Scenario Customer",
+              "email": "card.user@kora.test"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0004-000000000006",
+      "name": "Card Charge - Resend OTP",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPath": "/merchant/api/v1/charges/card/resend-otp"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"OTP resent successfully\",\n  \"data\": {\n    \"transaction_reference\": \"{{val (jsonPath request.body '$.transaction_reference') default='CARD-SCENARIO-001'}}\",\n    \"status\": \"processing\",\n    \"response_message\": \"A new OTP has been sent to your mobile number\"\n  }\n}"
+      }
+    }
+  ]
+}

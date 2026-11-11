@@ -1,0 +1,310 @@
+{
+  "mappings": [
+    {
+      "id": "00000000-0000-0000-0018-000000000001",
+      "name": "Identity Consent Validation Guard - Reject verification_consent=false",
+      "priority": 4,
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "^/(merchant/)?api/v1/identities/(ng|ke|gh|za)/.*",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$[?(@.verification_consent == false)]"
+          }
+        ]
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": false,
+          "message": "Customer consent is required to perform verification",
+          "data": null
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0018-000000000002",
+      "name": "Nigeria KYC - Verify BVN",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "^/(merchant/)?api/v1/identities/ng/bvn$",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$.id"
+          },
+          {
+            "matchesJsonPath": "$[?(@.verification_consent == true)]"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"BVN verified successfully\",\n  \"data\": {\n    \"reference\": \"VR-BVN-{{jsonPath request.body '$.id'}}\",\n    \"id\": \"{{jsonPath request.body '$.id'}}\",\n    \"id_type\": \"ng_bvn\",\n    \"first_name\": \"{{val (jsonPath request.body '$.first_name') default='Trevor'}}\",\n    \"last_name\": \"{{val (jsonPath request.body '$.last_name') default='Mandela'}}\",\n    \"middle_name\": \"Chukwudi\",\n    \"date_of_birth\": \"1989-07-08\",\n    \"gender\": \"male\",\n    \"phone_number\": \"08031234567\",\n    \"email\": \"trevor.mandela@kora.test\",\n    \"nationality\": \"NG\",\n    \"status\": \"verified\",\n    \"validation\": {\n      \"first_name\": { \"match\": true },\n      \"last_name\": { \"match\": true },\n      \"date_of_birth\": { \"match\": true }\n    },\n    \"facial_match\": {\n      \"confidence_score\": 96.5,\n      \"match\": true\n    }\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "VR-BVN-{{jsonPath request.body '$.id'}}",
+            "state": {
+              "reference": "VR-BVN-{{jsonPath request.body '$.id'}}",
+              "id": "{{jsonPath request.body '$.id'}}",
+              "id_type": "ng_bvn",
+              "first_name": "{{val (jsonPath request.body '$.first_name') default='Trevor'}}",
+              "last_name": "{{val (jsonPath request.body '$.last_name') default='Mandela'}}",
+              "status": "verified",
+              "createdAt": "{{now format='yyyy-MM-dd\\'T\\'HH:mm:ss\\'Z\\''}}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0018-000000000003",
+      "name": "Nigeria KYC - Verify NIN",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "^/(merchant/)?api/v1/identities/ng/nin$",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$.id"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"NIN verified successfully\",\n  \"data\": {\n    \"reference\": \"VR-NIN-{{jsonPath request.body '$.id'}}\",\n    \"id\": \"{{jsonPath request.body '$.id'}}\",\n    \"id_type\": \"ng_nin\",\n    \"first_name\": \"{{val (jsonPath request.body '$.first_name') default='Trevor'}}\",\n    \"last_name\": \"{{val (jsonPath request.body '$.last_name') default='Mandela'}}\",\n    \"date_of_birth\": \"1989-07-08\",\n    \"gender\": \"male\",\n    \"phone_number\": \"08031234567\",\n    \"status\": \"verified\",\n    \"facial_match\": {\n      \"confidence_score\": 97.0,\n      \"match\": true\n    }\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "VR-NIN-{{jsonPath request.body '$.id'}}",
+            "state": {
+              "reference": "VR-NIN-{{jsonPath request.body '$.id'}}",
+              "id": "{{jsonPath request.body '$.id'}}",
+              "id_type": "ng_nin",
+              "first_name": "{{val (jsonPath request.body '$.first_name') default='Trevor'}}",
+              "last_name": "{{val (jsonPath request.body '$.last_name') default='Mandela'}}",
+              "status": "verified",
+              "createdAt": "{{now format='yyyy-MM-dd\\'T\\'HH:mm:ss\\'Z\\''}}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0018-000000000004",
+      "name": "Nigeria KYC - Verify Virtual NIN (vNIN)",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "^/(merchant/)?api/v1/identities/ng/vnin$",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$.id"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"vNIN verified successfully\",\n  \"data\": {\n    \"reference\": \"VR-VNIN-{{jsonPath request.body '$.id'}}\",\n    \"id\": \"{{jsonPath request.body '$.id'}}\",\n    \"id_type\": \"ng_vnin\",\n    \"first_name\": \"Trevor\",\n    \"last_name\": \"Mandela\",\n    \"date_of_birth\": \"1989-07-08\",\n    \"status\": \"verified\"\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "VR-VNIN-{{jsonPath request.body '$.id'}}",
+            "state": {
+              "reference": "VR-VNIN-{{jsonPath request.body '$.id'}}",
+              "id": "{{jsonPath request.body '$.id'}}",
+              "id_type": "ng_vnin",
+              "first_name": "Trevor",
+              "last_name": "Mandela",
+              "status": "verified"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0018-000000000005",
+      "name": "Nigeria KYC - Verify Phone Number",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "^/(merchant/)?api/v1/identities/ng/phone$",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$.id"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Phone number verified successfully\",\n  \"data\": {\n    \"reference\": \"VR-PHN-{{jsonPath request.body '$.id'}}\",\n    \"id\": \"{{jsonPath request.body '$.id'}}\",\n    \"phone_number\": \"{{jsonPath request.body '$.id'}}\",\n    \"id_type\": \"ng_phone\",\n    \"first_name\": \"Trevor\",\n    \"last_name\": \"Mandela\",\n    \"status\": \"verified\"\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "VR-PHN-{{jsonPath request.body '$.id'}}",
+            "state": {
+              "reference": "VR-PHN-{{jsonPath request.body '$.id'}}",
+              "id": "{{jsonPath request.body '$.id'}}",
+              "id_type": "ng_phone",
+              "first_name": "Trevor",
+              "last_name": "Mandela",
+              "status": "verified"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0018-000000000006",
+      "name": "Nigeria KYC - Verify Bank Account",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "^/(merchant/)?api/v1/identities/ng/bank-account$"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Bank account verified successfully\",\n  \"data\": {\n    \"reference\": \"VR-BA-{{val (jsonPath request.body '$.account_number') default='2158634852'}}\",\n    \"account_number\": \"{{val (jsonPath request.body '$.account_number') default='2158634852'}}\",\n    \"bank_code\": \"{{val (jsonPath request.body '$.bank_code') default='033'}}\",\n    \"account_name\": \"EBUKA CIROMA OLADEMJI\",\n    \"first_name\": \"Ebuka\",\n    \"last_name\": \"Olademji\",\n    \"bvn\": \"22222222222\",\n    \"status\": \"verified\"\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "VR-BA-{{val (jsonPath request.body '$.account_number') default='2158634852'}}",
+            "state": {
+              "reference": "VR-BA-{{val (jsonPath request.body '$.account_number') default='2158634852'}}",
+              "id": "{{val (jsonPath request.body '$.account_number') default='2158634852'}}",
+              "id_type": "ng_bank_account",
+              "first_name": "Ebuka",
+              "last_name": "Olademji",
+              "status": "verified"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0018-000000000007",
+      "name": "Nigeria KYC - Verify Driver's License",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "^/(merchant/)?api/v1/identities/ng/drivers-license$"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Driver's license verified successfully\",\n  \"data\": {\n    \"reference\": \"VR-DL-{{val (jsonPath request.body '$.id') default='FKJ12345AA01'}}\",\n    \"id\": \"{{val (jsonPath request.body '$.id') default='FKJ12345AA01'}}\",\n    \"id_type\": \"ng_drivers_license\",\n    \"first_name\": \"Trevor\",\n    \"last_name\": \"Mandela\",\n    \"date_of_birth\": \"1989-07-08\",\n    \"issued_date\": \"2021-01-10\",\n    \"expiry_date\": \"2026-01-10\",\n    \"status\": \"verified\"\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "VR-DL-{{val (jsonPath request.body '$.id') default='FKJ12345AA01'}}",
+            "state": {
+              "reference": "VR-DL-{{val (jsonPath request.body '$.id') default='FKJ12345AA01'}}",
+              "id": "{{val (jsonPath request.body '$.id') default='FKJ12345AA01'}}",
+              "id_type": "ng_drivers_license",
+              "first_name": "Trevor",
+              "last_name": "Mandela",
+              "status": "verified"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0018-000000000008",
+      "name": "Nigeria KYC - Verify Voter's Card (PVC)",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "^/(merchant/)?api/v1/identities/ng/voters-card$"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Voter's card verified successfully\",\n  \"data\": {\n    \"reference\": \"VR-VC-{{val (jsonPath request.body '$.id') default='90F5B1234567890'}}\",\n    \"id\": \"{{val (jsonPath request.body '$.id') default='90F5B1234567890'}}\",\n    \"id_type\": \"ng_voters_card\",\n    \"first_name\": \"Trevor\",\n    \"last_name\": \"Mandela\",\n    \"state\": \"Lagos\",\n    \"lga\": \"Eti-Osa\",\n    \"status\": \"verified\"\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "VR-VC-{{val (jsonPath request.body '$.id') default='90F5B1234567890'}}",
+            "state": {
+              "reference": "VR-VC-{{val (jsonPath request.body '$.id') default='90F5B1234567890'}}",
+              "id": "{{val (jsonPath request.body '$.id') default='90F5B1234567890'}}",
+              "id_type": "ng_voters_card",
+              "first_name": "Trevor",
+              "last_name": "Mandela",
+              "status": "verified"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0018-000000000009",
+      "name": "Nigeria KYC - Verify International Passport",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "^/(merchant/)?api/v1/identities/ng/passport$"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Passport verified successfully\",\n  \"data\": {\n    \"reference\": \"VR-PP-{{val (jsonPath request.body '$.id') default='A12345678'}}\",\n    \"id\": \"{{val (jsonPath request.body '$.id') default='A12345678'}}\",\n    \"id_type\": \"ng_passport\",\n    \"first_name\": \"Trevor\",\n    \"last_name\": \"Mandela\",\n    \"issued_date\": \"2020-05-01\",\n    \"expiry_date\": \"2030-05-01\",\n    \"status\": \"verified\"\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "VR-PP-{{val (jsonPath request.body '$.id') default='A12345678'}}",
+            "state": {
+              "reference": "VR-PP-{{val (jsonPath request.body '$.id') default='A12345678'}}",
+              "id": "{{val (jsonPath request.body '$.id') default='A12345678'}}",
+              "id_type": "ng_passport",
+              "first_name": "Trevor",
+              "last_name": "Mandela",
+              "status": "verified"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

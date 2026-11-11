@@ -1,0 +1,102 @@
+{
+  "mappings": [
+    {
+      "id": "00000000-0000-0000-0016-000000000001",
+      "name": "Get Merchant Balance History",
+      "priority": 5,
+      "request": {
+        "method": "GET",
+        "urlPath": "/merchant/api/v1/balances/history"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": true,
+          "message": "Balance history retrieved successfully",
+          "data": [
+            {
+              "reference": "KPY-LEDGER-001",
+              "currency": "NGN",
+              "amount": 25000.5,
+              "direction": "credit",
+              "balance_before": 474999.5,
+              "balance_after": 500000.0,
+              "narration": "Settlement credit for KORA-DYN-001",
+              "date": "2025-01-15T10:00:00Z"
+            },
+            {
+              "reference": "KPY-LEDGER-002",
+              "currency": "NGN",
+              "amount": 50000.0,
+              "direction": "debit",
+              "balance_before": 500000.0,
+              "balance_after": 450000.0,
+              "narration": "Refund deduction for REFUND-SCENARIO-001",
+              "date": "2025-01-15T10:05:00Z"
+            }
+          ],
+          "pagination": {
+            "page": 1,
+            "per_page": 20,
+            "total": 2,
+            "total_pages": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0016-000000000002",
+      "name": "List Merchant Settlements",
+      "priority": 5,
+      "request": {
+        "method": "GET",
+        "urlPath": "/merchant/api/v1/settlements"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": true,
+          "message": "Settlements retrieved successfully",
+          "data": [
+            {
+              "reference": "STL-2025-001",
+              "currency": "NGN",
+              "total_amount": 485000.0,
+              "settled_amount": 485000.0,
+              "status": "settled",
+              "settlement_date": "2025-01-15T08:00:00Z"
+            }
+          ],
+          "pagination": {
+            "page": 1,
+            "per_page": 20,
+            "total": 1,
+            "total_pages": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0016-000000000003",
+      "name": "Get Settlement by Reference",
+      "priority": 5,
+      "request": {
+        "method": "GET",
+        "urlPathTemplate": "/merchant/api/v1/settlements/{reference}"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Settlement retrieved successfully\",\n  \"data\": {\n    \"reference\": \"{{request.path.reference}}\",\n    \"currency\": \"NGN\",\n    \"total_amount\": 485000,\n    \"settled_amount\": 485000,\n    \"status\": \"settled\",\n    \"settlement_date\": \"2025-01-15T08:00:00Z\"\n  }\n}"
+      }
+    }
+  ]
+}

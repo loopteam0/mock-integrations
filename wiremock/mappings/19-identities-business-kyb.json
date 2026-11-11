@@ -1,0 +1,78 @@
+{
+  "mappings": [
+    {
+      "id": "00000000-0000-0000-0019-000000000001",
+      "name": "Nigeria KYB - Verify CAC Business Registration",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "^/(merchant/)?api/v1/identities/ng/cac$",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$.id"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"CAC verified successfully\",\n  \"data\": {\n    \"reference\": \"VR-CAC-{{jsonPath request.body '$.id'}}\",\n    \"id\": \"{{jsonPath request.body '$.id'}}\",\n    \"rc_number\": \"{{jsonPath request.body '$.id'}}\",\n    \"registration_type\": \"{{val (jsonPath request.body '$.registration_type') default='RC'}}\",\n    \"company_name\": \"KORA PAYMENTS LIMITED\",\n    \"company_type\": \"PRIVATE COMPANY LIMITED BY SHARES\",\n    \"registration_date\": \"2018-05-14\",\n    \"company_status\": \"ACTIVE\",\n    \"company_email\": \"compliance@korapay.com\",\n    \"branch_address\": \"12 Admiralty Way, Lekki Phase 1, Lagos\",\n    \"status\": \"verified\"\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "VR-CAC-{{jsonPath request.body '$.id'}}",
+            "state": {
+              "reference": "VR-CAC-{{jsonPath request.body '$.id'}}",
+              "id": "{{jsonPath request.body '$.id'}}",
+              "id_type": "ng_cac",
+              "first_name": "KORA PAYMENTS",
+              "last_name": "LIMITED",
+              "status": "verified"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0019-000000000002",
+      "name": "Nigeria KYB - Verify Corporate TIN",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "^/(merchant/)?api/v1/identities/ng/tin$",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$.id"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"TIN verified successfully\",\n  \"data\": {\n    \"reference\": \"VR-TIN-{{jsonPath request.body '$.id'}}\",\n    \"id\": \"{{jsonPath request.body '$.id'}}\",\n    \"tin\": \"{{jsonPath request.body '$.id'}}\",\n    \"company_name\": \"KORA PAYMENTS LIMITED\",\n    \"rc_number\": \"1492819\",\n    \"tax_office\": \"MSTO LEKKI\",\n    \"phone_number\": \"08031234567\",\n    \"email\": \"tax@korapay.com\",\n    \"status\": \"verified\"\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "VR-TIN-{{jsonPath request.body '$.id'}}",
+            "state": {
+              "reference": "VR-TIN-{{jsonPath request.body '$.id'}}",
+              "id": "{{jsonPath request.body '$.id'}}",
+              "id_type": "ng_tin",
+              "first_name": "KORA PAYMENTS",
+              "last_name": "LIMITED",
+              "status": "verified"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

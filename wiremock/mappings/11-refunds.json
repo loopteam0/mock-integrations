@@ -1,0 +1,162 @@
+{
+  "mappings": [
+    {
+      "id": "00000000-0000-0000-0011-000000000001",
+      "name": "Initiate Refund - Scenario & Dynamic State Recording (Started -> Refunded)",
+      "priority": 3,
+      "scenarioName": "Refund-Balance-Lifecycle",
+      "requiredScenarioState": "Started",
+      "newScenarioState": "Refunded",
+      "request": {
+        "method": "POST",
+        "urlPath": "/merchant/api/v1/refunds/initiate",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$.reference"
+          },
+          {
+            "matchesJsonPath": "$.amount"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Refund initiated successfully\",\n  \"data\": {\n    \"refund_reference\": \"{{jsonPath request.body '$.reference'}}\",\n    \"payment_reference\": \"{{val (jsonPath request.body '$.payment_reference') default='KPY-ORIG-001'}}\",\n    \"amount\": \"{{jsonPath request.body '$.amount'}}\",\n    \"currency\": \"{{val (jsonPath request.body '$.currency') default='NGN'}}\",\n    \"reason\": \"{{val (jsonPath request.body '$.reason') default='Customer requested refund'}}\",\n    \"status\": \"completed\"\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "{{jsonPath request.body '$.reference'}}",
+            "state": {
+              "refundReference": "{{jsonPath request.body '$.reference'}}",
+              "paymentReference": "{{val (jsonPath request.body '$.payment_reference') default='KPY-ORIG-001'}}",
+              "amount": "{{jsonPath request.body '$.amount'}}",
+              "currency": "{{val (jsonPath request.body '$.currency') default='NGN'}}",
+              "reason": "{{val (jsonPath request.body '$.reason') default='Customer requested refund'}}",
+              "status": "completed",
+              "createdAt": "{{now format='yyyy-MM-dd\\'T\\'HH:mm:ss\\'Z\\''}}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0011-000000000002",
+      "name": "Initiate Refund - Dynamic State Recording (Subsequent Refunds in Refunded State)",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPath": "/merchant/api/v1/refunds/initiate",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$.reference"
+          },
+          {
+            "matchesJsonPath": "$.amount"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Refund initiated successfully\",\n  \"data\": {\n    \"refund_reference\": \"{{jsonPath request.body '$.reference'}}\",\n    \"payment_reference\": \"{{val (jsonPath request.body '$.payment_reference') default='KPY-ORIG-001'}}\",\n    \"amount\": \"{{jsonPath request.body '$.amount'}}\",\n    \"currency\": \"{{val (jsonPath request.body '$.currency') default='NGN'}}\",\n    \"reason\": \"{{val (jsonPath request.body '$.reason') default='Customer requested refund'}}\",\n    \"status\": \"completed\"\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "{{jsonPath request.body '$.reference'}}",
+            "state": {
+              "refundReference": "{{jsonPath request.body '$.reference'}}",
+              "paymentReference": "{{val (jsonPath request.body '$.payment_reference') default='KPY-ORIG-001'}}",
+              "amount": "{{jsonPath request.body '$.amount'}}",
+              "currency": "{{val (jsonPath request.body '$.currency') default='NGN'}}",
+              "reason": "{{val (jsonPath request.body '$.reason') default='Customer requested refund'}}",
+              "status": "completed",
+              "createdAt": "{{now format='yyyy-MM-dd\\'T\\'HH:mm:ss\\'Z\\''}}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0011-000000000003",
+      "name": "Query Refund by Reference - Found in State Extension",
+      "priority": 5,
+      "request": {
+        "method": "GET",
+        "urlPathTemplate": "/merchant/api/v1/refunds/{reference}",
+        "customMatcher": {
+          "name": "state-matcher",
+          "parameters": {
+            "hasContext": "{{request.path.reference}}"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Refund retrieved successfully\",\n  \"data\": {\n    \"refund_reference\": \"{{state context=request.path.reference property='refundReference' default=request.path.reference}}\",\n    \"payment_reference\": \"{{state context=request.path.reference property='paymentReference' default='KPY-ORIG-001'}}\",\n    \"amount\": \"{{state context=request.path.reference property='amount' default='0.00'}}\",\n    \"currency\": \"{{state context=request.path.reference property='currency' default='NGN'}}\",\n    \"reason\": \"{{state context=request.path.reference property='reason' default='Customer requested refund'}}\",\n    \"status\": \"{{state context=request.path.reference property='status' default='completed'}}\",\n    \"created_at\": \"{{state context=request.path.reference property='createdAt' default='2025-01-01T00:00:00Z'}}\"\n  }\n}"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0011-000000000004",
+      "name": "Query Refund by Reference - Not Found (404)",
+      "priority": 10,
+      "request": {
+        "method": "GET",
+        "urlPathTemplate": "/merchant/api/v1/refunds/{reference}"
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": false,\n  \"message\": \"Refund with reference '{{request.path.reference}}' was not found.\",\n  \"data\": null\n}"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0011-000000000005",
+      "name": "List Refunds",
+      "priority": 5,
+      "request": {
+        "method": "GET",
+        "urlPath": "/merchant/api/v1/refunds"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": true,
+          "message": "Refunds retrieved successfully",
+          "data": [
+            {
+              "refund_reference": "REFUND-SCENARIO-001",
+              "payment_reference": "KPY-ORIG-001",
+              "amount": "50000",
+              "currency": "NGN",
+              "reason": "Order cancelled",
+              "status": "completed"
+            }
+          ],
+          "pagination": {
+            "page": 1,
+            "per_page": 20,
+            "total": 1,
+            "total_pages": 1
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,196 @@
+{
+  "mappings": [
+    {
+      "id": "00000000-0000-0000-0020-000000000001",
+      "name": "Kenya KYC - Verify National ID",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "^/(merchant/)?api/v1/identities/ke/national-id$"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Kenya National ID verified successfully\",\n  \"data\": {\n    \"reference\": \"VR-KE-ID-{{val (jsonPath request.body '$.id') default='12345678'}}\",\n    \"id\": \"{{val (jsonPath request.body '$.id') default='12345678'}}\",\n    \"id_type\": \"ke_national_id\",\n    \"country\": \"KE\",\n    \"first_name\": \"Jomo\",\n    \"last_name\": \"Kenyatta\",\n    \"date_of_birth\": \"1990-04-12\",\n    \"gender\": \"male\",\n    \"status\": \"verified\"\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "VR-KE-ID-{{val (jsonPath request.body '$.id') default='12345678'}}",
+            "state": {
+              "reference": "VR-KE-ID-{{val (jsonPath request.body '$.id') default='12345678'}}",
+              "id": "{{val (jsonPath request.body '$.id') default='12345678'}}",
+              "id_type": "ke_national_id",
+              "first_name": "Jomo",
+              "last_name": "Kenyatta",
+              "status": "verified"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0020-000000000002",
+      "name": "Kenya KYC - Verify KRA PIN",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "^/(merchant/)?api/v1/identities/ke/kra-pin$"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Kenya KRA PIN verified successfully\",\n  \"data\": {\n    \"reference\": \"VR-KE-KRA-{{val (jsonPath request.body '$.id') default='A001234567Z'}}\",\n    \"id\": \"{{val (jsonPath request.body '$.id') default='A001234567Z'}}\",\n    \"id_type\": \"ke_kra_pin\",\n    \"country\": \"KE\",\n    \"first_name\": \"Jomo\",\n    \"last_name\": \"Kenyatta\",\n    \"taxpayer_name\": \"JOMO KENYATTA\",\n    \"pin_status\": \"Active\",\n    \"status\": \"verified\"\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "VR-KE-KRA-{{val (jsonPath request.body '$.id') default='A001234567Z'}}",
+            "state": {
+              "reference": "VR-KE-KRA-{{val (jsonPath request.body '$.id') default='A001234567Z'}}",
+              "id": "{{val (jsonPath request.body '$.id') default='A001234567Z'}}",
+              "id_type": "ke_kra_pin",
+              "first_name": "Jomo",
+              "last_name": "Kenyatta",
+              "status": "verified"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0020-000000000003",
+      "name": "Kenya KYC - Verify Passport",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "^/(merchant/)?api/v1/identities/ke/passport$"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Kenya Passport verified successfully\",\n  \"data\": {\n    \"reference\": \"VR-KE-PP-{{val (jsonPath request.body '$.id') default='AK123456'}}\",\n    \"id\": \"{{val (jsonPath request.body '$.id') default='AK123456'}}\",\n    \"id_type\": \"ke_passport\",\n    \"country\": \"KE\",\n    \"first_name\": \"Jomo\",\n    \"last_name\": \"Kenyatta\",\n    \"status\": \"verified\"\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "VR-KE-PP-{{val (jsonPath request.body '$.id') default='AK123456'}}",
+            "state": {
+              "reference": "VR-KE-PP-{{val (jsonPath request.body '$.id') default='AK123456'}}",
+              "id": "{{val (jsonPath request.body '$.id') default='AK123456'}}",
+              "id_type": "ke_passport",
+              "first_name": "Jomo",
+              "last_name": "Kenyatta",
+              "status": "verified"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0020-000000000004",
+      "name": "Ghana KYC - Verify Ghana Card / National ID",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "^/(merchant/)?api/v1/identities/gh/(ghana-card|national-id)$"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Ghana Card verified successfully\",\n  \"data\": {\n    \"reference\": \"VR-GH-CARD-{{val (jsonPath request.body '$.id') default='GHA-123456789-0'}}\",\n    \"id\": \"{{val (jsonPath request.body '$.id') default='GHA-123456789-0'}}\",\n    \"id_type\": \"gh_national_id\",\n    \"country\": \"GH\",\n    \"first_name\": \"Kwame\",\n    \"last_name\": \"Mensah\",\n    \"date_of_birth\": \"1988-03-06\",\n    \"status\": \"verified\"\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "VR-GH-CARD-{{val (jsonPath request.body '$.id') default='GHA-123456789-0'}}",
+            "state": {
+              "reference": "VR-GH-CARD-{{val (jsonPath request.body '$.id') default='GHA-123456789-0'}}",
+              "id": "{{val (jsonPath request.body '$.id') default='GHA-123456789-0'}}",
+              "id_type": "gh_national_id",
+              "first_name": "Kwame",
+              "last_name": "Mensah",
+              "status": "verified"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0020-000000000005",
+      "name": "Ghana KYC - Verify SSNIT & Voter's Card",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "^/(merchant/)?api/v1/identities/gh/(ssnit|voters-card)$"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Ghana identity verified successfully\",\n  \"data\": {\n    \"reference\": \"VR-GH-ID-{{val (jsonPath request.body '$.id') default='C001234567890'}}\",\n    \"id\": \"{{val (jsonPath request.body '$.id') default='C001234567890'}}\",\n    \"id_type\": \"gh_identity\",\n    \"country\": \"GH\",\n    \"first_name\": \"Kwame\",\n    \"last_name\": \"Mensah\",\n    \"status\": \"verified\"\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "VR-GH-ID-{{val (jsonPath request.body '$.id') default='C001234567890'}}",
+            "state": {
+              "reference": "VR-GH-ID-{{val (jsonPath request.body '$.id') default='C001234567890'}}",
+              "id": "{{val (jsonPath request.body '$.id') default='C001234567890'}}",
+              "id_type": "gh_identity",
+              "first_name": "Kwame",
+              "last_name": "Mensah",
+              "status": "verified"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0020-000000000006",
+      "name": "South Africa KYC - Verify Smart National ID",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "^/(merchant/)?api/v1/identities/za/national-id$"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"South Africa National ID verified successfully\",\n  \"data\": {\n    \"reference\": \"VR-ZA-{{val (jsonPath request.body '$.id') default='8907085000081'}}\",\n    \"id\": \"{{val (jsonPath request.body '$.id') default='8907085000081'}}\",\n    \"id_type\": \"za_national_id\",\n    \"country\": \"ZA\",\n    \"first_name\": \"Sipho\",\n    \"last_name\": \"Nkosi\",\n    \"citizenship\": \"ZA Citizen\",\n    \"status\": \"verified\"\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "VR-ZA-{{val (jsonPath request.body '$.id') default='8907085000081'}}",
+            "state": {
+              "reference": "VR-ZA-{{val (jsonPath request.body '$.id') default='8907085000081'}}",
+              "id": "{{val (jsonPath request.body '$.id') default='8907085000081'}}",
+              "id_type": "za_national_id",
+              "first_name": "Sipho",
+              "last_name": "Nkosi",
+              "status": "verified"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "mappings": [
+    {
+      "id": "00000000-0000-0000-0009-000000000001",
+      "name": "Get Merchant Balances - Initial State (Started)",
+      "priority": 3,
+      "scenarioName": "Refund-Balance-Lifecycle",
+      "requiredScenarioState": "Started",
+      "request": {
+        "method": "GET",
+        "urlPath": "/merchant/api/v1/balances"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": true,
+          "message": "Merchant balances retrieved successfully",
+          "data": {
+            "NGN": {
+              "pending_balance": 25000,
+              "available_balance": 500000
+            },
+            "KES": {
+              "pending_balance": 1200,
+              "available_balance": 150000
+            },
+            "GHS": {
+              "pending_balance": 0,
+              "available_balance": 35000
+            },
+            "USD": {
+              "pending_balance": 500,
+              "available_balance": 12000
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0009-000000000002",
+      "name": "Get Merchant Balances - Post-Refund State (Refunded)",
+      "priority": 3,
+      "scenarioName": "Refund-Balance-Lifecycle",
+      "requiredScenarioState": "Refunded",
+      "request": {
+        "method": "GET",
+        "urlPath": "/merchant/api/v1/balances"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": true,
+          "message": "Merchant balances retrieved successfully",
+          "data": {
+            "NGN": {
+              "pending_balance": 25000,
+              "available_balance": 450000
+            },
+            "KES": {
+              "pending_balance": 1200,
+              "available_balance": 150000
+            },
+            "GHS": {
+              "pending_balance": 0,
+              "available_balance": 35000
+            },
+            "USD": {
+              "pending_balance": 500,
+              "available_balance": 12000
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "status": true,
+  "message": "Banks retrieved successfully",
+  "data": [
+    {
+      "name": "Access Bank",
+      "slug": "access-bank",
+      "code": "044",
+      "nibss_bank_code": "000014",
+      "country": "NG"
+    },
+    {
+      "name": "Guaranty Trust Bank",
+      "slug": "guaranty-trust-bank",
+      "code": "058",
+      "nibss_bank_code": "000013",
+      "country": "NG"
+    },
+    {
+      "name": "United Bank for Africa",
+      "slug": "united-bank-for-africa",
+      "code": "033",
+      "nibss_bank_code": "000004",
+      "country": "NG"
+    },
+    {
+      "name": "Wema Bank",
+      "slug": "wema-bank",
+      "code": "035",
+      "nibss_bank_code": "000017",
+      "country": "NG"
+    },
+    {
+      "name": "Zenith Bank",
+      "slug": "zenith-bank",
+      "code": "057",
+      "nibss_bank_code": "000015",
+      "country": "NG"
+    }
+  ]
+}

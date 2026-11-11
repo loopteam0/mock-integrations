@@ -1,0 +1,128 @@
+{
+  "mappings": [
+    {
+      "id": "00000000-0000-0000-0013-000000000001",
+      "name": "List Pay With Bank Supported Banks",
+      "priority": 3,
+      "request": {
+        "method": "GET",
+        "urlPath": "/merchant/api/v1/charges/pay-with-bank/banks"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "bodyFileName": "pwb-banks.json"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0013-000000000002",
+      "name": "Charge via Pay With Bank - Dynamic State Recording",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPath": "/merchant/api/v1/charges/pay-with-bank",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$.reference"
+          },
+          {
+            "matchesJsonPath": "$.amount"
+          },
+          {
+            "matchesJsonPath": "$.currency"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Pay With Bank initiated successfully\",\n  \"data\": {\n    \"currency\": \"{{jsonPath request.body '$.currency'}}\",\n    \"amount\": \"{{jsonPath request.body '$.amount'}}\",\n    \"amount_expected\": \"{{jsonPath request.body '$.amount'}}\",\n    \"fee\": 25.0,\n    \"vat\": 1.88,\n    \"reference\": \"{{jsonPath request.body '$.reference'}}\",\n    \"payment_reference\": \"KPY-PWB-{{jsonPath request.body '$.reference'}}\",\n    \"transaction_reference\": \"{{jsonPath request.body '$.reference'}}\",\n    \"status\": \"processing\",\n    \"bank_code\": \"{{val (jsonPath request.body '$.bank_code') default='058'}}\",\n    \"authorization\": {\n      \"redirect_url\": \"https://pay.korapay.com/eft/{{jsonPath request.body '$.reference'}}\"\n    },\n    \"customer\": {\n      \"name\": \"{{val (jsonPath request.body '$.customer.name') default='PWB Customer'}}\",\n      \"email\": \"{{val (jsonPath request.body '$.customer.email') default='pwb@kora.test'}}\"\n    }\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "{{jsonPath request.body '$.reference'}}",
+            "state": {
+              "reference": "{{jsonPath request.body '$.reference'}}",
+              "amount": "{{jsonPath request.body '$.amount'}}",
+              "currency": "{{jsonPath request.body '$.currency'}}",
+              "customerName": "{{val (jsonPath request.body '$.customer.name') default='PWB Customer'}}",
+              "customerEmail": "{{val (jsonPath request.body '$.customer.email') default='pwb@kora.test'}}",
+              "narration": "{{val (jsonPath request.body '$.narration') default='Pay With Bank Payment'}}",
+              "paymentMethod": "pay_with_bank",
+              "status": "success",
+              "createdAt": "{{now format='yyyy-MM-dd\\'T\\'HH:mm:ss\\'Z\\''}}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0013-000000000003",
+      "name": "Authorize Pay With Bank Charge",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPath": "/merchant/api/v1/charges/pay-with-bank/authorize"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Payment authorized successfully\",\n  \"data\": {\n    \"status\": \"success\",\n    \"reference\": \"{{val (jsonPath request.body '$.transaction_reference') default='PWB-DYN-001'}}\",\n    \"transaction_reference\": \"{{val (jsonPath request.body '$.transaction_reference') default='PWB-DYN-001'}}\"\n  }\n}"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0013-000000000004",
+      "name": "Charge via EFT - Dynamic State Recording",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPath": "/merchant/api/v1/charges/eft",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$.reference"
+          },
+          {
+            "matchesJsonPath": "$.amount"
+          },
+          {
+            "matchesJsonPath": "$.currency"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"EFT charge initiated successfully\",\n  \"data\": {\n    \"reference\": \"{{jsonPath request.body '$.reference'}}\",\n    \"payment_reference\": \"KPY-EFT-{{jsonPath request.body '$.reference'}}\",\n    \"amount\": \"{{jsonPath request.body '$.amount'}}\",\n    \"currency\": \"{{jsonPath request.body '$.currency'}}\",\n    \"fee\": 15.0,\n    \"vat\": 1.13,\n    \"status\": \"processing\",\n    \"authorization\": {\n      \"redirect_url\": \"https://pay.korapay.com/eft/{{jsonPath request.body '$.reference'}}\"\n    },\n    \"customer\": {\n      \"name\": \"{{val (jsonPath request.body '$.customer.name') default='EFT Customer'}}\",\n      \"email\": \"{{val (jsonPath request.body '$.customer.email') default='eft@kora.test'}}\"\n    }\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "{{jsonPath request.body '$.reference'}}",
+            "state": {
+              "reference": "{{jsonPath request.body '$.reference'}}",
+              "amount": "{{jsonPath request.body '$.amount'}}",
+              "currency": "{{jsonPath request.body '$.currency'}}",
+              "customerName": "{{val (jsonPath request.body '$.customer.name') default='EFT Customer'}}",
+              "customerEmail": "{{val (jsonPath request.body '$.customer.email') default='eft@kora.test'}}",
+              "narration": "{{val (jsonPath request.body '$.narration') default='EFT Payment'}}",
+              "paymentMethod": "eft",
+              "status": "success",
+              "createdAt": "{{now format='yyyy-MM-dd\\'T\\'HH:mm:ss\\'Z\\''}}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

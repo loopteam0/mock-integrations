@@ -1,0 +1,110 @@
+{
+  "mappings": [
+    {
+      "id": "00000000-0000-0000-0007-000000000001",
+      "name": "Payout Lifecycle - Step 1: Disburse PAYOUT-SCENARIO-001 (Started -> Processing)",
+      "priority": 3,
+      "scenarioName": "Payout-Lifecycle",
+      "requiredScenarioState": "Started",
+      "newScenarioState": "Processing",
+      "request": {
+        "method": "POST",
+        "urlPath": "/merchant/api/v1/transactions/disburse",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$[?(@.reference == 'PAYOUT-SCENARIO-001')]"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": true,
+          "message": "Disbursement initiated successfully",
+          "data": {
+            "reference": "PAYOUT-SCENARIO-001",
+            "amount": "75000.00",
+            "fee": "50.00",
+            "currency": "NGN",
+            "status": "processing",
+            "narration": "Scenario Vendor Payout",
+            "customer": {
+              "name": "Scenario Beneficiary",
+              "email": "vendor@kora.test"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0007-000000000002",
+      "name": "Payout Lifecycle - Step 2: First Poll Returns Processing (Processing -> Completed)",
+      "priority": 3,
+      "scenarioName": "Payout-Lifecycle",
+      "requiredScenarioState": "Processing",
+      "newScenarioState": "Completed",
+      "request": {
+        "method": "GET",
+        "urlPath": "/merchant/api/v1/transactions/PAYOUT-SCENARIO-001"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": true,
+          "message": "Payout retrieved successfully",
+          "data": {
+            "reference": "PAYOUT-SCENARIO-001",
+            "amount": "75000.00",
+            "fee": "50.00",
+            "currency": "NGN",
+            "status": "processing",
+            "narration": "Scenario Vendor Payout",
+            "customer": {
+              "name": "Scenario Beneficiary",
+              "email": "vendor@kora.test"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0007-000000000003",
+      "name": "Payout Lifecycle - Step 3: Subsequent Polls Return Success (Completed)",
+      "priority": 3,
+      "scenarioName": "Payout-Lifecycle",
+      "requiredScenarioState": "Completed",
+      "request": {
+        "method": "GET",
+        "urlPath": "/merchant/api/v1/transactions/PAYOUT-SCENARIO-001"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": true,
+          "message": "Payout retrieved successfully",
+          "data": {
+            "reference": "PAYOUT-SCENARIO-001",
+            "amount": "75000.00",
+            "fee": "50.00",
+            "currency": "NGN",
+            "status": "success",
+            "narration": "Scenario Vendor Payout",
+            "customer": {
+              "name": "Scenario Beneficiary",
+              "email": "vendor@kora.test"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

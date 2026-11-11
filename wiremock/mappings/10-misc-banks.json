@@ -1,0 +1,44 @@
+{
+  "mappings": [
+    {
+      "id": "00000000-0000-0000-0010-000000000001",
+      "name": "List Supported Banks",
+      "priority": 5,
+      "request": {
+        "method": "GET",
+        "urlPath": "/merchant/api/v1/misc/banks"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "bodyFileName": "banks.json"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0010-000000000002",
+      "name": "Resolve Bank Account Number",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPath": "/merchant/api/v1/misc/banks/resolve",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$.bank"
+          },
+          {
+            "matchesJsonPath": "$.account"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Bank account resolved successfully\",\n  \"data\": {\n    \"bank_name\": \"United Bank for Africa\",\n    \"bank_code\": \"{{jsonPath request.body '$.bank'}}\",\n    \"account_number\": \"{{jsonPath request.body '$.account'}}\",\n    \"account_name\": \"EBUKA CIROMA OLADEMJI\"\n  }\n}"
+      }
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "mappings": [
+    {
+      "id": "00000000-0000-0000-0001-000000000001",
+      "name": "Initialize Charge - Dynamic State Recording",
+      "priority": 5,
+      "request": {
+        "method": "POST",
+        "urlPath": "/merchant/api/v1/charges/initialize",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$.reference"
+          },
+          {
+            "matchesJsonPath": "$.amount"
+          },
+          {
+            "matchesJsonPath": "$.currency"
+          },
+          {
+            "matchesJsonPath": "$.customer.email"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Charge initialized successfully\",\n  \"data\": {\n    \"reference\": \"{{jsonPath request.body '$.reference'}}\",\n    \"checkout_url\": \"https://test-checkout.korapay.com/pay/{{jsonPath request.body '$.reference'}}\"\n  }\n}"
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "{{jsonPath request.body '$.reference'}}",
+            "state": {
+              "reference": "{{jsonPath request.body '$.reference'}}",
+              "amount": "{{jsonPath request.body '$.amount'}}",
+              "currency": "{{jsonPath request.body '$.currency'}}",
+              "customerName": "{{val (jsonPath request.body '$.customer.name') default='Kora Customer'}}",
+              "customerEmail": "{{jsonPath request.body '$.customer.email'}}",
+              "narration": "{{val (jsonPath request.body '$.narration') default='Kora Checkout Payment'}}",
+              "paymentMethod": "checkout",
+              "status": "success",
+              "createdAt": "{{now format='yyyy-MM-dd\\'T\\'HH:mm:ss\\'Z\\''}}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

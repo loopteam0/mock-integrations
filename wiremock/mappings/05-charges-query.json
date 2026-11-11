@@ -1,0 +1,138 @@
+{
+  "mappings": [
+    {
+      "id": "00000000-0000-0000-0005-000000000001",
+      "name": "Query Charge by Reference - Found in State Extension",
+      "priority": 5,
+      "request": {
+        "method": "GET",
+        "urlPathTemplate": "/merchant/api/v1/charges/{reference}",
+        "customMatcher": {
+          "name": "state-matcher",
+          "parameters": {
+            "hasContext": "{{request.path.reference}}"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": true,\n  \"message\": \"Charge retrieved successfully\",\n  \"data\": {\n    \"reference\": \"{{state context=request.path.reference property='reference' default=request.path.reference}}\",\n    \"payment_reference\": \"KPY-CHG-{{request.path.reference}}\",\n    \"currency\": \"{{state context=request.path.reference property='currency' default='NGN'}}\",\n    \"amount\": \"{{state context=request.path.reference property='amount' default='0.00'}}\",\n    \"amount_paid\": \"{{state context=request.path.reference property='amount' default='0.00'}}\",\n    \"fee\": 150.0,\n    \"vat\": 11.25,\n    \"status\": \"{{state context=request.path.reference property='status' default='success'}}\",\n    \"payment_method\": \"{{state context=request.path.reference property='paymentMethod' default='checkout'}}\",\n    \"description\": \"{{state context=request.path.reference property='narration' default='Kora Charge'}}\",\n    \"created_at\": \"{{state context=request.path.reference property='createdAt' default='2025-01-01T00:00:00Z'}}\",\n    \"customer\": {\n      \"name\": \"{{state context=request.path.reference property='customerName' default='Kora Customer'}}\",\n      \"email\": \"{{state context=request.path.reference property='customerEmail' default='customer@kora.test'}}\"\n    }\n  }\n}"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0005-000000000002",
+      "name": "Query Charge by Reference - Not Found (404)",
+      "priority": 10,
+      "request": {
+        "method": "GET",
+        "urlPathTemplate": "/merchant/api/v1/charges/{reference}"
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\n  \"status\": false,\n  \"message\": \"Charge with reference '{{request.path.reference}}' was not found.\",\n  \"data\": null\n}"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0005-000000000003",
+      "name": "List Charges (Pay-ins)",
+      "priority": 5,
+      "request": {
+        "method": "GET",
+        "urlPath": "/merchant/api/v1/charges"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": true,
+          "message": "Charges retrieved successfully",
+          "data": [
+            {
+              "reference": "KORA-DYN-001",
+              "payment_reference": "KPY-CHG-KORA-DYN-001",
+              "currency": "NGN",
+              "amount": "25000.50",
+              "fee": 150.0,
+              "vat": 11.25,
+              "status": "success",
+              "payment_method": "checkout",
+              "customer": {
+                "name": "Alice Wonderland",
+                "email": "alice@kora.test"
+              }
+            },
+            {
+              "reference": "KORA-BT-001",
+              "payment_reference": "KPY-CHG-KORA-BT-001",
+              "currency": "NGN",
+              "amount": "15000",
+              "fee": 150.0,
+              "vat": 11.25,
+              "status": "success",
+              "payment_method": "bank_transfer",
+              "customer": {
+                "name": "Bob Builder",
+                "email": "bob@kora.test"
+              }
+            }
+          ],
+          "pagination": {
+            "page": 1,
+            "per_page": 20,
+            "total": 2,
+            "total_pages": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0005-000000000004",
+      "name": "List Pay-ins Alias",
+      "priority": 5,
+      "request": {
+        "method": "GET",
+        "urlPath": "/merchant/api/v1/pay-ins"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": true,
+          "message": "Charges retrieved successfully",
+          "data": [
+            {
+              "reference": "KORA-DYN-001",
+              "payment_reference": "KPY-CHG-KORA-DYN-001",
+              "currency": "NGN",
+              "amount": "25000.50",
+              "fee": 150.0,
+              "vat": 11.25,
+              "status": "success",
+              "payment_method": "checkout",
+              "customer": {
+                "name": "Alice Wonderland",
+                "email": "alice@kora.test"
+              }
+            }
+          ],
+          "pagination": {
+            "page": 1,
+            "per_page": 20,
+            "total": 1,
+            "total_pages": 1
+          }
+        }
+      }
+    }
+  ]
+}

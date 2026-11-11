@@ -1,0 +1,82 @@
+{
+  "mappings": [
+    {
+      "id": "00000000-0000-0000-0012-000000000001",
+      "name": "Idempotency Flow - First Submission (Started -> Submitted)",
+      "priority": 3,
+      "scenarioName": "Idempotency-Flow",
+      "requiredScenarioState": "Started",
+      "newScenarioState": "Submitted",
+      "request": {
+        "method": "POST",
+        "urlPath": "/merchant/api/v1/charges/initialize",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$[?(@.reference == 'IDEMPOTENT-REF-001')]"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": true,
+          "message": "Charge initialized successfully",
+          "data": {
+            "reference": "IDEMPOTENT-REF-001",
+            "checkout_url": "https://test-checkout.korapay.com/pay/IDEMPOTENT-REF-001"
+          }
+        }
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "IDEMPOTENT-REF-001",
+            "state": {
+              "reference": "IDEMPOTENT-REF-001",
+              "amount": "{{val (jsonPath request.body '$.amount') default='10000'}}",
+              "currency": "{{val (jsonPath request.body '$.currency') default='NGN'}}",
+              "customerName": "{{val (jsonPath request.body '$.customer.name') default='Idempotent User'}}",
+              "customerEmail": "{{val (jsonPath request.body '$.customer.email') default='idempotent@kora.test'}}",
+              "narration": "Idempotent Payment",
+              "paymentMethod": "checkout",
+              "status": "success",
+              "createdAt": "{{now format='yyyy-MM-dd\\'T\\'HH:mm:ss\\'Z\\''}}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0012-000000000002",
+      "name": "Idempotency Flow - Duplicate Submission Rejected (Submitted)",
+      "priority": 3,
+      "scenarioName": "Idempotency-Flow",
+      "requiredScenarioState": "Submitted",
+      "request": {
+        "method": "POST",
+        "urlPath": "/merchant/api/v1/charges/initialize",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$[?(@.reference == 'IDEMPOTENT-REF-001')]"
+          }
+        ]
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": false,
+          "message": "Duplicate transaction reference 'IDEMPOTENT-REF-001'. Please use a unique reference.",
+          "error": "duplicate_reference",
+          "data": null
+        }
+      }
+    }
+  ]
+}

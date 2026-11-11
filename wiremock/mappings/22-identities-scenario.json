@@ -1,0 +1,133 @@
+{
+  "mappings": [
+    {
+      "id": "00000000-0000-0000-0022-000000000001",
+      "name": "Identity Verification Lifecycle - Step 1: Initiate ID-SCENARIO-001 (Started -> Pending_Consent)",
+      "priority": 3,
+      "scenarioName": "Identity-Verification-Lifecycle",
+      "requiredScenarioState": "Started",
+      "newScenarioState": "Pending_Consent",
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "^/(merchant/)?api/v1/identities/ng/bvn$",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$[?(@.id == 'ID-SCENARIO-001')]"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": true,
+          "message": "Verification requires additional consent confirmation",
+          "data": {
+            "reference": "VR-SCENARIO-001",
+            "id": "ID-SCENARIO-001",
+            "id_type": "ng_bvn",
+            "status": "pending_consent"
+          }
+        }
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "VR-SCENARIO-001",
+            "state": {
+              "reference": "VR-SCENARIO-001",
+              "id": "ID-SCENARIO-001",
+              "id_type": "ng_bvn",
+              "first_name": "Trevor",
+              "last_name": "Mandela",
+              "status": "pending_consent"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0022-000000000002",
+      "name": "Identity Verification Lifecycle - Step 2: Confirm Consent (Pending_Consent -> Verified)",
+      "priority": 3,
+      "scenarioName": "Identity-Verification-Lifecycle",
+      "requiredScenarioState": "Pending_Consent",
+      "newScenarioState": "Verified",
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "^/(merchant/)?api/v1/identities/verifications/consent$",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$[?(@.reference == 'VR-SCENARIO-001')]"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": true,
+          "message": "Consent verified successfully",
+          "data": {
+            "reference": "VR-SCENARIO-001",
+            "id": "ID-SCENARIO-001",
+            "id_type": "ng_bvn",
+            "first_name": "Trevor",
+            "last_name": "Mandela",
+            "status": "verified"
+          }
+        }
+      },
+      "serveEventListeners": [
+        {
+          "name": "recordState",
+          "parameters": {
+            "context": "VR-SCENARIO-001",
+            "state": {
+              "reference": "VR-SCENARIO-001",
+              "id": "ID-SCENARIO-001",
+              "id_type": "ng_bvn",
+              "first_name": "Trevor",
+              "last_name": "Mandela",
+              "status": "verified"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0022-000000000003",
+      "name": "Identity Verification Lifecycle - Step 3: Query VR-SCENARIO-001 When Verified",
+      "priority": 3,
+      "scenarioName": "Identity-Verification-Lifecycle",
+      "requiredScenarioState": "Verified",
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "^/(merchant/)?api/v1/identities/verifications/VR-SCENARIO-001$"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": true,
+          "message": "Verification retrieved successfully",
+          "data": {
+            "reference": "VR-SCENARIO-001",
+            "id": "ID-SCENARIO-001",
+            "id_type": "ng_bvn",
+            "first_name": "Trevor",
+            "last_name": "Mandela",
+            "status": "verified"
+          }
+        }
+      }
+    }
+  ]
+}
